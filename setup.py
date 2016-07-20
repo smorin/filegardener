@@ -61,7 +61,7 @@ with open('README.rst') as file:
 
 
 requires = ['Click']
-test_requirements = ['pytest>=2.8.0', 'pytest-cov']
+test_requirements = ['pytest>=2.9.2', 'pytest-cov']
 
 
 setup(
