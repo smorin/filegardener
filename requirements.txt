@@ -1,0 +1,8 @@
+# application requirements
+click
+
+# development requirements
+pytest
+pytest-cov
+pylint
+pex
