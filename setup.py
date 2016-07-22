@@ -69,7 +69,7 @@ setup(
     author=__author__,
     author_email='steve@stevemorin.com',
     version=__version__,
-    url='http://TODO',
+    url='https://github.com/smorin/filegardener',
     include_package_data=True,
     install_requires=requires,
     entry_points='''
