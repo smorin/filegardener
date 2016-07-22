@@ -3,8 +3,8 @@ filegardener
 File gardener - file maintenance utilities - file dedup, only copy detection, prune empty dirs
 
 
-.. image:: https://img.shields.io/smorin/v/filegardener.svg
-   :target: https://pypi.python.org/smorin/filegarderner
+.. image:: https://img.shields.io/pypi/v/filegardener.svg
+   :target: https://pypi.python.org/pypi/filegarderner
 
 .. image:: https://img.shields.io/travis/smorin/filegardener/master.svg
    :target: http://travis-ci.org/smorin/filegardener
