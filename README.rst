@@ -4,7 +4,7 @@ File gardener - file maintenance utilities - file dedup, only copy detection, pr
 
 
 .. image:: https://img.shields.io/pypi/v/filegardener.svg
-   :target: https://pypi.python.org/pypi/filegarderner
+   :target: https://pypi.python.org/pypi/filegardener
 
 .. image:: https://img.shields.io/travis/smorin/filegardener/master.svg
    :target: http://travis-ci.org/smorin/filegardener
