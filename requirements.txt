@@ -7,3 +7,4 @@ pytest-cov
 pylint
 pex
 py>=1.4.29 # required by pytest
+twine
