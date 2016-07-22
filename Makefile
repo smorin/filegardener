@@ -7,6 +7,8 @@ unittests: ## Run the unit tests
 	@echo "Alternative use pytest directly and install pytest and run the pytest runner"
 	@# https://pytest.org/latest/goodpractices.html
 	@echo "> py.test tests"
+	rm -rf ./filegardener.egg-info
+	rm filegardener.pyc
 
 py.test:
 	@which py.test || (echo "py.text is not installed: $$?\n Install:\n > pip install pytest pytest-cov"; exit 1)
@@ -73,8 +75,15 @@ create-requirements: ## Creates a requirements file but you shouldn't need this 
 install-requirements: ## Installs a requirements file but you shouldn't need this when using setup.py
 	pip install -r requirements.txt
 
+list-packages: ## print the name of packages you can register
+	@find tmp/dist -iname "*.tar.gz"
+	@find tmp/wheelhouse -iname "*.whl"
 
-	
+publish: ## Publish/Register this package to production on PyPi
+	@echo "list packages to register with: > make list-packages\n"
+	@echo "> twine upload "$$(find tmp/dist -iname "*.tar.gz")
+	@echo "> twine upload "$$(find tmp/dist -iname "*.whl")
+
 .DEFAULT_GOAL := help
 
 .PHONY: help
