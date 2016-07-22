@@ -9,8 +9,9 @@ File gardener - file maintenance utilities - file dedup, only copy detection, pr
 .. image:: https://img.shields.io/travis/smorin/filegardener/master.svg
    :target: http://travis-ci.org/smorin/filegardener
 
-.. image:: https://readthedocs.org/projects/filegardener/badge/?version=stable
-   :target: https://readthedocs/en/stable
+.. image:: https://readthedocs.org/projects/filegardener/badge/?version=latest
+   :target: http://filegardener.readthedocs.io/en/latest/?badge=latest
+   :alt: Documentation Status
 
 
 * `Github Page <https://github.com/smorin/filegardener>`_

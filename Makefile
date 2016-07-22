@@ -116,3 +116,13 @@ clean: ## cleans up all dist files, build files AND NOT virtualenv
 	
 clean-all: clean ## cleans up all dist files, build files AND virtualenv
 	rm -rf $${FILEGARDENER_ENV:-.}/filegardener-virtualenv
+	
+init-docs: ## You should only do this once
+	if [ ! -d ./docs ] ; then sphinx-quickstart ; fi
+
+generate-docs-html:  ## Generate documentation for the project in docs/_build/html/
+	$(MAKE) -C docs html	
+
+open-docs:  ## Tries to open the html docs in a browser
+	@if [ "$$(uname)" == "Darwin" ]; then open docs/build/html/index.html ; fi
+	@if [ "$$(uname)" != "Darwin" ]; then echo "Not implemented for non-mac" ; fi
