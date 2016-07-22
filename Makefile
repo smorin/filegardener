@@ -7,8 +7,8 @@ unittests: ## Run the unit tests
 	@echo "Alternative use pytest directly and install pytest and run the pytest runner"
 	@# https://pytest.org/latest/goodpractices.html
 	@echo "> py.test tests"
-	rm -rf ./filegardener.egg-info
-	rm filegardener.pyc
+	if [ -d ./filegardener.egg-info ] ; then rm -rf ./filegardener.egg-info ; fi
+	if [ -f filegardener.pyc ] ; then rm filegardener.pyc ; fi
 
 py.test:
 	@which py.test || (echo "py.text is not installed: $$?\n Install:\n > pip install pytest pytest-cov"; exit 1)
