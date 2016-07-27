@@ -1,0 +1,3 @@
+test_data/3dupsof6/seconddir/ipsum_smallest.txt
+test_data/3dupsof6/seconddir/two/green_lantern_hero1.jpg
+test_data/3dupsof6/seconddir/two/matrix.gif
