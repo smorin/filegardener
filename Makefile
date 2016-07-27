@@ -7,8 +7,6 @@ unittests: ## Run the unit tests
 	@echo "Alternative use pytest directly and install pytest and run the pytest runner"
 	@# https://pytest.org/latest/goodpractices.html
 	@echo "> py.test tests"
-	if [ -d ./filegardener.egg-info ] ; then rm -rf ./filegardener.egg-info ; fi
-	if [ -f filegardener.pyc ] ; then rm filegardener.pyc ; fi
 
 py.test:
 	@which py.test || (echo "py.text is not installed: $$?\n Install:\n > pip install pytest pytest-cov"; exit 1)
@@ -67,6 +65,9 @@ load-venv-%: ## using py2 or py3 print or load command to load your virtualenv
 install-local: ## installs as a local package TODO: better comment
 	pip install --upgrade .
 
+install-dev: ## installs editable in place so you can do development
+	pip install -e .
+
 init: install-requirements  ## install all requirements once
 
 create-requirements: ## Creates a requirements file but you shouldn't need this when using setup.py
@@ -82,7 +83,7 @@ list-packages: ## print the name of packages you can register
 publish: ## Publish/Register this package to production on PyPi
 	@echo "list packages to register with: > make list-packages\n"
 	@echo "> twine upload "$$(find tmp/dist -iname "*.tar.gz")
-	@echo "> twine upload "$$(find tmp/dist -iname "*.whl")
+	@echo "> twine upload "$$(find tmp/wheelhouse -iname "*.whl")
 
 .DEFAULT_GOAL := help
 
@@ -104,7 +105,7 @@ help:
 build: ## builds a setuptool sdist (source distribution and local wheel package) for filegardener
 	@# Reference: https://packaging.python.org/distributing/#wheels 
 	mkdir -p tmp/egg-info
-	python setup.py egg_info --egg-base=./tmp/egg-info build --build-base=./tmp/build sdist --dist-dir=./tmp/dist bdist_wheel --verbose --dist-dir=./tmp/wheelhouse
+	python setup.py -v egg_info --egg-base=./tmp/egg-info build --build-base=./tmp/build sdist --dist-dir=./tmp/dist bdist_wheel --verbose --dist-dir=./tmp/wheelhouse
 	
 build-exe: build ## builds a self contained python exe (doesn't include interpreter) platform specific
 	@# Reference: https://pex.readthedocs.io
@@ -112,10 +113,13 @@ build-exe: build ## builds a self contained python exe (doesn't include interpre
 
 clean: ## cleans up all dist files, build files AND NOT virtualenv
 	rm -rf ./tmp
-	rm ./filegardener.pyc
+	rm -f ./filegardener.pyc
+	rm -rf ./filegardener.egg-info
+	rm -rf ./tests/__pycache__
 	
 clean-all: clean ## cleans up all dist files, build files AND virtualenv
 	rm -rf $${FILEGARDENER_ENV:-.}/filegardener-virtualenv
+	rm -f ./*.log
 	
 init-docs: ## You should only do this once
 	if [ ! -d ./docs ] ; then sphinx-quickstart ; fi
