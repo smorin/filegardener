@@ -124,7 +124,7 @@ def emptydirs(ctx, checkdir):
         innercount = innercount - 1 # decrement by one so it excludes counting itself
         for dirpath, dirnames, files in os.walk(mydir, topdown=False):
             if ctx['debug']:
-                print dirpath, dirnames, files
+                LOGGER.debug("%s %s %s" % (dirpath, dirnames, files))
                 # click.echo(dirpath)
             innercount = innercount + 1
     click.echo(innercount)
