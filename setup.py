@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 import os
+import os.path
 import sys
 from glob import glob
 
@@ -63,6 +64,12 @@ with open('README.rst') as file:
 requires = ['Click']
 test_requirements = ['pytest>=2.9.2', 'pytest-cov']
 
+test_data_files = []
+
+for dirpath, dirnames, files in os.walk('test_data'):
+    test_data_files.append(dirpath)
+    for filename in files:
+        test_data_files.append(os.path.join(dirpath,filename))
 
 setup(
     name='filegardener',
@@ -77,6 +84,7 @@ setup(
         filegardener=filegardener:cli
     ''',
     py_modules=['filegardener'],
+    data_files=[('test_data', test_data_files)],
     # package_dir = {'':'.'},
     # packages=find_packages('.'),
     # packages=find_packages(exclude=["*.tests", "*.tests.*", "tests.*", "test"]),
