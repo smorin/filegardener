@@ -4,19 +4,28 @@ import pytest
 import filegardener
 import os
 import os.path
+import io
+
+
+# Reference: http://pythontesting.net/framework/pytest/pytest-session-scoped-fixtures/
+# Reference: http://pythontesting.net/framework/pytest/pytest-fixtures/
 
 class TestBasics(object):
     """
     This class could have been called anything and can have second class here
     """
 
-    @pytest.fixture(autouse=True)
+    @pytest.fixture(autouse=True, scope='session')
     def setup(self):
         """
         Here is where things get setup
         """
-        asdf = 1 + 1
-        asdf = asdf + 2
+        with io.open("test_data/DIRECTORIES.txt", "r", encoding="utf8") as fp:
+            for line in fp:
+                dirpath = line.rstrip('\n')
+                if not os.path.exists(dirpath):
+                    os.makedirs(dirpath)
+                
 
 
     possible_keys = pytest.mark.parametrize('key', ('accept', 'ACCEPT', 'aCcEpT', 'Accept'))
