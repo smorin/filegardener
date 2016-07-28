@@ -133,7 +133,11 @@ def dup_tester(test_dir, reverse=False, nodups=False):
     else:
         with open(test_validation_file) as f:
             i = 0
+            result_lookup = {}
             for line in f:
                 file_name = line.rstrip('\n') # remove new lines from each line
-                assert os.path.abspath(os.path.join(os.getcwd(),file_name)) == next(generator)
+                file_name = os.path.abspath(os.path.join(os.getcwd(), file_name))
+                result_lookup[file_name] = file_name
+            for line in generator:
+                assert result_lookup[line] == line
 
