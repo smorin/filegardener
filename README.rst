@@ -13,6 +13,7 @@ File gardener - file maintenance utilities - file dedup, only copy detection, pr
    :target: http://filegardener.readthedocs.io/en/latest/?badge=latest
    :alt: Documentation Status
 
+.. image:: https://img.shields.io/pypi/pyversions/filegardener.svg?maxAge=2592000   
 
 * `Github Page <https://github.com/smorin/filegardener>`_
 * `Issue Tracking <https://github.com/smorin/filegardener/issues>`_
