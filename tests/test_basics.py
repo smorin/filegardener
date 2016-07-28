@@ -121,5 +121,5 @@ def dup_tester(test_dir, reverse=False):
         i = 0
         for line in f:
             file_name = line.rstrip('\n') # remove new lines from each line
-            assert os.path.abspath(os.path.join(os.getcwd(),file_name)) == generator.next()
+            assert os.path.abspath(os.path.join(os.getcwd(),file_name)) == next(generator)
 
