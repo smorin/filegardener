@@ -72,6 +72,15 @@ test_data/identialdirs/seconddir
 test_data/identialdirs/seconddir/EGG-INFO
 test_data/identialdirs/seconddir/liten-0.1.5-py2.5
 test_data/identialdirs/seconddir/liten-0.1.5-py2.5/EGG-INFO
+test_data/identicaldirs
+test_data/identicaldirs/firstdir
+test_data/identicaldirs/firstdir/EGG-INFO
+test_data/identicaldirs/firstdir/liten-0.1.5-py2.5
+test_data/identicaldirs/firstdir/liten-0.1.5-py2.5/EGG-INFO
+test_data/identicaldirs/seconddir
+test_data/identicaldirs/seconddir/EGG-INFO
+test_data/identicaldirs/seconddir/liten-0.1.5-py2.5
+test_data/identicaldirs/seconddir/liten-0.1.5-py2.5/EGG-INFO
 test_data/nodups
 test_data/nodups/firstdir
 test_data/nodups/firstdir/EGG-INFO
