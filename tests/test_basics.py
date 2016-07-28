@@ -86,11 +86,11 @@ class TestBasics(object):
     def test_duplicate_one(self):
         """ test that there is only one duplicate"""
 
-    @pytest.mark.parametrize('testdir',['3dupsof6','1dup'])
+    @pytest.mark.parametrize('testdir',['3dupsof6', '1dup', 'identicaldirs'])
     def test_dedup(self, testdir):
         dup_tester(testdir)
 
-    @pytest.mark.parametrize('testdir',['3dupsof6','1dup'])
+    @pytest.mark.parametrize('testdir',['3dupsof6', '1dup', 'identicaldirs'])
     def test_dedup_reverse(self, testdir):
         dup_tester(testdir, reverse=True)
 
