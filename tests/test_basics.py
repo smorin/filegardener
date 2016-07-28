@@ -85,9 +85,14 @@ class TestBasics(object):
 
     def test_duplicate_one(self):
         """ test that there is only one duplicate"""
-        
-    def test_dedup_3dupsof6(self):
-        dup_tester('3dupsof6')
+
+    @pytest.mark.parametrize('testdir',['3dupsof6','1dup'])
+    def test_dedup(self, testdir):
+        dup_tester(testdir)
+
+    @pytest.mark.parametrize('testdir',['3dupsof6','1dup'])
+    def test_dedup_reverse(self, testdir):
+        dup_tester(testdir, reverse=True)
 
     @pytest.mark.parametrize(
         'other, result', (
@@ -99,7 +104,7 @@ class TestBasics(object):
         """ Example of using parameters to make multiple call """
         assert (other == other) is result
 
-def dup_tester(test_dir, reverse=False):
+def dup_tester(test_dir, reverse=False, none=False):
     """ you give this method a path name and it looks uner test_data/ for that directory to test.  
     This test assumes that the order the duplicates will be found will be the same"""
     test_basedir = os.path.abspath(os.path.join(os.getcwd(),'test_data',test_dir))

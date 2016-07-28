@@ -1,0 +1,2 @@
+test_data/1dup/firstdir/liten.py
+test_data/1dup/firstdir/liten-0.1.5-py2.5/liten.py
