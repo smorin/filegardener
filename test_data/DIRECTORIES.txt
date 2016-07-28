@@ -47,6 +47,7 @@ test_data/7notemptydirs/other/subdir1/subsubdir2
 test_data/7notemptydirs/other/subdir1/subsubdir2/subsubsubdir1
 test_data/7notemptydirs/other/subdir1/subsubdir3
 test_data/emptydirs
+test_data/emptydirs/firstdir
 test_data/emptydirs/main
 test_data/emptydirs/main/subdir1
 test_data/emptydirs/main/subdir1/subsubdir1
@@ -63,6 +64,7 @@ test_data/emptydirs/other/subdir1/subsubdir1
 test_data/emptydirs/other/subdir1/subsubdir2
 test_data/emptydirs/other/subdir1/subsubdir2/subsubsubdir1
 test_data/emptydirs/other/subdir1/subsubdir3
+test_data/emptydirs/seconddir
 test_data/identialdirs
 test_data/identialdirs/firstdir
 test_data/identialdirs/firstdir/EGG-INFO

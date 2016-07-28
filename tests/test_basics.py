@@ -76,7 +76,7 @@ class TestBasics(object):
     def test_countdirs_sixteen(self):
         """ test countfiles for a set of zero files"""
         # filegardener.configure_logger(True,None)
-        assert filegardener.count_dirs([],[os.path.abspath(os.path.join(os.getcwd(),'./test_data/emptydirs'))]) == 16
+        assert filegardener.count_dirs([],[os.path.abspath(os.path.join(os.getcwd(),'./test_data/emptydirs'))]) == 18
 
     def test_countdirs_three(self):
         """ test countfiles for a set of 20 files """
@@ -94,6 +94,10 @@ class TestBasics(object):
     def test_dedup_reverse(self, testdir):
         dup_tester(testdir, reverse=True)
 
+    @pytest.mark.parametrize('testdir',['emptydirs', 'nodups'])
+    def test_dedup_none(self, testdir):
+        dup_tester(testdir, nodups=True)
+
     @pytest.mark.parametrize(
         'other, result', (
             ("some string", True),
@@ -104,7 +108,7 @@ class TestBasics(object):
         """ Example of using parameters to make multiple call """
         assert (other == other) is result
 
-def dup_tester(test_dir, reverse=False, none=False):
+def dup_tester(test_dir, reverse=False, nodups=False):
     """ you give this method a path name and it looks uner test_data/ for that directory to test.  
     This test assumes that the order the duplicates will be found will be the same"""
     test_basedir = os.path.abspath(os.path.join(os.getcwd(),'test_data',test_dir))
@@ -122,9 +126,14 @@ def dup_tester(test_dir, reverse=False, none=False):
         
     test_validation_file = os.path.join(test_basedir,validation_file_name)
     generator = filegardener.dedup_yield(srcdir,checkdir)
-    with open(test_validation_file) as f:
-        i = 0
-        for line in f:
-            file_name = line.rstrip('\n') # remove new lines from each line
-            assert os.path.abspath(os.path.join(os.getcwd(),file_name)) == next(generator)
+    
+    if nodups:
+        with pytest.raises(StopIteration):
+            next(generator)
+    else:
+        with open(test_validation_file) as f:
+            i = 0
+            for line in f:
+                file_name = line.rstrip('\n') # remove new lines from each line
+                assert os.path.abspath(os.path.join(os.getcwd(),file_name)) == next(generator)
 
