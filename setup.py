@@ -67,7 +67,8 @@ test_requirements = ['pytest>=2.9.2', 'pytest-cov']
 test_data_files = []
 
 for dirpath, dirnames, files in os.walk('test_data'):
-    test_data_files.append(dirpath)
+    # you can't add directories to data_files
+    # test_data_files.append(dirpath) 
     for filename in files:
         test_data_files.append(os.path.join(dirpath,filename))
 
