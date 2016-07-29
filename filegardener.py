@@ -169,22 +169,44 @@ def dedup_yield(srcdir, checkdir):
         for thefile in dup_files:
             yield thefile
 
-
-
 @cli.command(context_settings=CONTEXT_SETTINGS)
 @click.option('--srcdir', '-s', multiple=True, required=True, help='directories to check',  type=click.Path(exists=True, file_okay=False, dir_okay=True, readable=True, resolve_path=True))
 @click.argument('checkdir', nargs=-1, required=True, type=click.Path(exists=True, file_okay=False, dir_okay=True, readable=True, resolve_path=True))
+@click.option('--relpath/--no-relpath', '-r', default=False, help='turn on/off relative path - default off')
 @click.pass_obj
-def tryyield(ctx, srcdir, checkdir):
-    """ test yield """
-    for i in try_yield():
-        click.echo("item: %s" % i)
+def onlycopy(ctx, srcdir, checkdir,relpath):
+    """
+    onlycopy command prints list of all the files that aren't in the srcdir
+    """
+    if relpath:
+        basepath = os.getcwd()
+        for i in onlycopy_yield(srcdir, checkdir):
+            click.echo(os.path.relpath(i, basepath))
+    else:
+        for i in onlycopy_yield(srcdir, checkdir):
+            click.echo(i)
+    
+def onlycopy_yield(srcdir, checkdir):
+    """
+    onlycopy command prints list of all the files that aren't in the srcdir
+    """
+    check_dir_no_overlap(srcdir, checkdir)
 
-def try_yield():
-    for i in range(10):
-        yield i
+    # http://stackoverflow.com/questions/19699127/efficient-array-concatenation
 
+    basefiles = []
+    for mydir in srcdir:
+        innerdir = get_files_and_size_from_dir(mydir)
+        basefiles.extend(innerdir)
 
+    size_dict = create_size_dict(basefiles)
+
+    for comparedir in checkdir:
+        only_files = get_only_copy(size_dict, comparedir)
+
+        LOGGER.debug("Length %s" % len(only_files))
+        for thefile in only_files:
+            yield thefile
 
 def check_dir_no_overlap(srcdir, checkdir):
     for x in checkdir:
@@ -225,8 +247,8 @@ def create_size_dict(files_size):
 
 def get_duplicate_files(size_dict, topdir):
     """
-    findonlycopy=False means find duplicates
-    findonlycopy=True means find if there is only one copy of it.
+    if_match_return_true=True means find duplicates
+    if_match_return_true=False means find if there is only one copy of it.
     """
         
     files = []
@@ -237,22 +259,31 @@ def get_duplicate_files(size_dict, topdir):
                 for dirpath, dirnames, files in os.walk(topdir) 
                     for filename in files 
                         if os.path.getsize(os.path.join(dirpath,filename)) in size_dict 
-                        and is_match(os.path.getsize(os.path.join(dirpath,filename)), #size
+                        and is_match(os.path.getsize(os.path.join(dirpath,filename)), # size
                         os.path.abspath(os.path.join(dirpath,filename)), # file
-                        size_dict[os.path.getsize(os.path.join(dirpath,filename))], #file_list
-                        if_match_return_true) #if_match_return_value
+                        size_dict[os.path.getsize(os.path.join(dirpath,filename))], # file_list
+                        if_match_return_true) # if_match_return_value
             ] 
     return files  
 
 def get_only_copy(size_dict, topdir):
     """
-    findonlycopy=False means find duplicates
-    findonlycopy=True means find if there is only one copy of it.
+    if_match_return_true=True means find duplicates
+    if_match_return_true=False means find if there is only one copy of it.
     """
     
     files = []
+    
+    if_match_return_true = False
 
-    files = [ os.path.abspath(os.path.join(dirpath,filename)) for dirpath, dirnames, files in os.walk(topdir) for filename in files if os.path.getsize(os.path.join(dirpath,filename)) not in size_dict or is_match(os.path.getsize(os.path.join(dirpath,filename)),os.path.abspath(os.path.join(dirpath,filename)),size_dict[os.path.getsize(os.path.join(dirpath,filename))],findonlycopy) ]
+    files = [ os.path.abspath(os.path.join(dirpath,filename)) # return absolute path of file that matches criteria
+                for dirpath, dirnames, files in os.walk(topdir) 
+                    for filename in files 
+                        if os.path.getsize(os.path.join(dirpath,filename)) not in size_dict 
+                        or is_match(os.path.getsize(os.path.join(dirpath,filename)), # size
+                        os.path.abspath(os.path.join(dirpath,filename)), # file
+                        size_dict[os.path.getsize(os.path.join(dirpath,filename))], # file_list
+                        if_match_return_true) ] # if_match_return_value
     return files 
   
 
@@ -276,9 +307,9 @@ def is_match(size, file, file_list, if_match_return_value):
         return compare_whole_file(size, file, file_list, if_match_return_value)
     else:
         for file_to_compare in file_list:
-            if compare_first_4k(file, file_to_compare, if_match_return_value):
+            if compare_first_4k(file, file_to_compare):
                 # TODO: Optimize by saving the md5 for each check if a list
-                if compare_md5(file, file_to_compare, if_match_return_value):
+                if compare_md5(file, file_to_compare):
                     return if_match_return_value
         return not if_match_return_value
 
@@ -298,10 +329,9 @@ def compare_whole_file(size, file, file_list, if_match_return_value):
             return if_match_return_value
     return not if_match_return_value
 
-def compare_first_4k(file, file_to_compare, if_match_return_value):
+def compare_first_4k(file, file_to_compare):
     '''
-        if_match_return_value=True means find duplicates
-        if_match_return_value=False means find not duplicates
+        Should compare the first 4k of each file to see if they match
     '''
     file_bytes = b''
     file_to_compare_bytes = b''
@@ -314,19 +344,18 @@ def compare_first_4k(file, file_to_compare, if_match_return_value):
         if len(file_bytes) != 4096:
             raise Exception("Did not read the expected file size")
     if file_bytes == file_to_compare_bytes:
-        return if_match_return_value
+        return True
     else:
-        return not if_match_return_value
+        return False
 
-def compare_md5(file, file_to_compare, if_match_return_value):
+def compare_md5(file, file_to_compare):
     '''
+        compares the md5 to see if there is a match
+
         Block size directly depends on the block size of your filesystem
         to avoid performances issues
         Here I have blocks of 4096 octets (Default NTFS)
-    
-        if_match_return_value=True means find duplicates
-        if_match_return_value=False means find not duplicates
-        '''
+    '''
     # TODO I have to check that block size thing
     md5_base = None
     md5_to_compare = None
@@ -350,9 +379,9 @@ def compare_md5(file, file_to_compare, if_match_return_value):
         md5_to_compare = md5.hexdigest()
     
     if md5_base == md5_to_compare:
-        return if_match_return_value
+        return True
     else:
-        return not if_match_return_value
+        return False
         
         
 def configure_logger(debug_on, verbosity):
