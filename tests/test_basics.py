@@ -96,7 +96,23 @@ class TestBasics(object):
 
     @pytest.mark.parametrize('testdir',['emptydirs', 'nodups'])
     def test_dedup_none(self, testdir):
-        dup_tester(testdir, nodups=True)
+        dup_tester(testdir, noresults=True)
+
+    @pytest.mark.parametrize('testdir',['1dup', 'nodups'])
+    def test_only(self, testdir):
+        only_tester(testdir)
+    
+    @pytest.mark.parametrize('testdir',['3dupsof6', '1dup', 'nodups'])
+    def test_only_reverse(self, testdir):
+        only_tester(testdir, reverse=True)
+    
+    @pytest.mark.parametrize('testdir',['emptydirs'])
+    def test_only_none(self, testdir):
+        only_tester(testdir, noresults=True)
+
+    @pytest.mark.parametrize('testdir',['emptydirs', 'identicaldirs'])
+    def test_only_none(self, testdir):
+        only_tester(testdir, noresults=True, reverse=True)
 
     @pytest.mark.parametrize(
         'other, result', (
@@ -108,7 +124,7 @@ class TestBasics(object):
         """ Example of using parameters to make multiple call """
         assert (other == other) is result
 
-def dup_tester(test_dir, reverse=False, nodups=False):
+def dup_tester(test_dir, reverse=False, noresults=False):
     """ you give this method a path name and it looks uner test_data/ for that directory to test.  
     This test assumes that the order the duplicates will be found will be the same"""
     test_basedir = os.path.abspath(os.path.join(os.getcwd(),'test_data',test_dir))
@@ -127,7 +143,40 @@ def dup_tester(test_dir, reverse=False, nodups=False):
     test_validation_file = os.path.join(test_basedir,validation_file_name)
     generator = filegardener.dedup_yield(srcdir,checkdir)
     
-    if nodups:
+    if noresults:
+        with pytest.raises(StopIteration):
+            next(generator)
+    else:
+        with open(test_validation_file) as f:
+            i = 0
+            result_lookup = {}
+            for line in f:
+                file_name = line.rstrip('\n') # remove new lines from each line
+                file_name = os.path.abspath(os.path.join(os.getcwd(), file_name))
+                result_lookup[file_name] = file_name
+            for line in generator:
+                assert result_lookup[line] == line
+
+def only_tester(test_dir, reverse=False, noresults=False):
+    """ you give this method a path name and it looks uner test_data/ for that directory to test.  
+    This test assumes that the order the duplicates will be found will be the same"""
+    test_basedir = os.path.abspath(os.path.join(os.getcwd(),'test_data',test_dir))
+    validation_file_name = ''
+    dir1 = os.path.join(test_basedir,'firstdir')
+    dir2 = os.path.join(test_basedir,'seconddir')
+    if reverse: 
+        validation_file_name = 'onlycopy_correct_results_reverse_input_dirs.txt'
+        srcdir = [dir2]
+        checkdir = [dir1]
+    else:
+        validation_file_name = 'onlycopy_correct_results.txt'
+        srcdir = [dir1]
+        checkdir = [dir2]
+        
+    test_validation_file = os.path.join(test_basedir,validation_file_name)
+    generator = filegardener.onlycopy_yield(srcdir,checkdir)
+    
+    if noresults:
         with pytest.raises(StopIteration):
             next(generator)
     else:

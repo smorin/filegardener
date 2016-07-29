@@ -1,0 +1,2 @@
+test_data/3dupsof6/firstdir/ipsum_reallong.txt
+test_data/3dupsof6/firstdir/two/ipsum_small.txt
