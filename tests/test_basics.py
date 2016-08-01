@@ -63,10 +63,15 @@ class TestBasics(object):
         """ test that the subdirectory emptydirs in test data exists"""
         assert os.path.isdir(os.path.abspath(os.path.join(os.getcwd(),'./test_data/emptydirs'))) == True
 
+    def test_countfiles_one(self):
+        """ test countfiles for a set of one files"""
+        # filegardener.configure_logger(True,None)
+        assert filegardener.count_files([],[os.path.abspath(os.path.join(os.getcwd(),'./test_data/emptydirs'))]) == 1
+
     def test_countfiles_zero(self):
         """ test countfiles for a set of zero files"""
         # filegardener.configure_logger(True,None)
-        assert filegardener.count_files([],[os.path.abspath(os.path.join(os.getcwd(),'./test_data/emptydirs'))]) == 0
+        assert filegardener.count_files([],[os.path.abspath(os.path.join(os.getcwd(),'./test_data/emptydirs/main'))]) == 0
 
     def test_countfiles_twenty(self):
         """ test countfiles for a set of 20 files """
@@ -113,6 +118,14 @@ class TestBasics(object):
     @pytest.mark.parametrize('testdir',['emptydirs', 'identicaldirs'])
     def test_only_none(self, testdir):
         only_tester(testdir, noresults=True, reverse=True)
+
+    @pytest.mark.parametrize('testdir',['emptydirs', '7notemptydirs'])
+    def test_emptydirs(self, testdir):
+        emptydirs_tester(testdir)
+        
+    @pytest.mark.parametrize('testdir',['identicaldirs', 'nodups'])
+    def test_emptydirs_none(self, testdir):
+        emptydirs_tester(testdir, noresults=True)
 
     @pytest.mark.parametrize(
         'other, result', (
@@ -175,6 +188,31 @@ def only_tester(test_dir, reverse=False, noresults=False):
         
     test_validation_file = os.path.join(test_basedir,validation_file_name)
     generator = filegardener.onlycopy_yield(srcdir,checkdir)
+    
+    if noresults:
+        with pytest.raises(StopIteration):
+            next(generator)
+    else:
+        with open(test_validation_file) as f:
+            i = 0
+            result_lookup = {}
+            for line in f:
+                file_name = line.rstrip('\n') # remove new lines from each line
+                file_name = os.path.abspath(os.path.join(os.getcwd(), file_name))
+                result_lookup[file_name] = file_name
+            for line in generator:
+                assert result_lookup[line] == line
+
+def emptydirs_tester(test_dir, noresults=False):
+    """ you give this method a path name and it looks uner test_data/ for that directory to test.  
+    This test assumes that the order the duplicates will be found will be the same"""
+    test_basedir = os.path.abspath(os.path.join(os.getcwd(),'test_data',test_dir))
+    validation_file_name = ''
+
+    validation_file_name = 'emptydirs_correct_results.txt'
+        
+    test_validation_file = os.path.join(test_basedir,validation_file_name)
+    generator = filegardener.emptydirs_yield([test_basedir])
     
     if noresults:
         with pytest.raises(StopIteration):

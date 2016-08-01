@@ -161,10 +161,15 @@ def emptydirs_yield(checkdir):
                 entry = parent_dict[my_parent]
                 parent_dict[my_parent] = [is_empty and entry[0], entry[1] + 1]
             else:
-                parent_dict[my_parent] = [is_empty,  1]
+                if is_leaf:
+                    parent_dict[my_parent] = [is_empty,  1]
+                else:
+                    self_entry = parent_dict[os.path.abspath(dirpath)]
+                    parent_dict[my_parent] = [is_empty and self_entry[0], 1]
             
-            if is_leaf and is_empty:
-                yield dirpath
+            if is_leaf:
+                if is_empty:
+                    yield dirpath
             else:
                 abs_dirpath = os.path.abspath(dirpath)
                 if abs_dirpath in parent_dict:
