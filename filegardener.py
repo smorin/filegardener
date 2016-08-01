@@ -25,7 +25,7 @@ logging.getLogger(__name__).addHandler(NullHandler())
 
 LOGGER = logging.getLogger(__name__)
 
-__version__ = '1.1.1' 
+__version__ = '1.2.1' 
 __author__ = 'Steve Morin'
 __script_name__ = 'filegardener'
 
@@ -113,29 +113,75 @@ def count_dirs(ctx, checkdir):
 
 @cli.command(context_settings=CONTEXT_SETTINGS)
 @click.argument('checkdir', nargs=-1, required=True, type=click.Path(exists=True, file_okay=False, dir_okay=True, readable=True, resolve_path=True))
+@click.option('--relpath/--no-relpath', '-r', default=False, help='turn on/off relative path - default off')
 @click.pass_obj
-def emptydirs(ctx, checkdir):
+def emptydirs(ctx, checkdir, relpath):
     """
     emptydir command lists all the directories that no file in it or it's sub directories
     """
+    if relpath:
+        basepath = os.getcwd()
+        for i in emptydirs_yield(checkdir):
+            click.echo(os.path.relpath(i, basepath))
+    else:
+        for i in emptydirs_yield(checkdir):
+            click.echo(i)
 
-    innercount = 0
+def get_parent_dir(mydir):
+	return os.path.abspath(os.path.join(mydir,os.path.pardir))
+
+def emptydirs_yield(checkdir):
+    """
+    emptydirs command prints list of directories in one or more checkdirs
+    """
+    # http://stackoverflow.com/questions/19699127/efficient-array-concatenation
     for mydir in checkdir:
-        innercount = innercount - 1 # decrement by one so it excludes counting itself
+        is_leaf = False
+        is_empty = False
+        parent_dict = {}
+        my_parent = None
+        abs_dirpath = None
         for dirpath, dirnames, files in os.walk(mydir, topdown=False):
-            if ctx['debug']:
-                LOGGER.debug("%s %s %s" % (dirpath, dirnames, files))
-                # click.echo(dirpath)
-            innercount = innercount + 1
-    click.echo(innercount)
+            # if ctx['debug']: # debug needs to be defined
+            #     LOGGER.debug("%s %s %s" % (dirpath, dirnames, files))
 
+            if len(dirnames) == 0:
+                is_leaf = True
+            else:
+                is_leaf = False
+
+            if len(files) == 0:
+                is_empty = True
+            else:
+                is_empty = False
+
+            my_parent = get_parent_dir(dirpath)
+
+            if my_parent in parent_dict:
+                entry = parent_dict[my_parent]
+                parent_dict[my_parent] = [is_empty and entry[0], entry[1] + 1]
+            else:
+                parent_dict[my_parent] = [is_empty,  1]
+            
+            if is_leaf and is_empty:
+                yield dirpath
+            else:
+                abs_dirpath = os.path.abspath(dirpath)
+                if abs_dirpath in parent_dict:
+                    entry = parent_dict[abs_dirpath]
+                    del parent_dict[abs_dirpath] # because your traversing the dirs with topdown=False it should have already seen all children
+                    if len(dirnames) != entry[1]:
+                        raise Exception("Entries don't match the number of dirs, so a subdir wasn't checked.")
+                    else:
+                        if entry[0] and is_empty:
+                            yield abs_dirpath
 
 @cli.command(context_settings=CONTEXT_SETTINGS)
 @click.option('--srcdir', '-s', multiple=True, required=True, help='directories to check',  type=click.Path(exists=True, file_okay=False, dir_okay=True, readable=True, resolve_path=True))
 @click.argument('checkdir', nargs=-1, required=True, type=click.Path(exists=True, file_okay=False, dir_okay=True, readable=True, resolve_path=True))
 @click.option('--relpath/--no-relpath', '-r', default=False, help='turn on/off relative path - default off')
 @click.pass_obj
-def dedup(ctx, srcdir, checkdir,relpath):
+def dedup(ctx, srcdir, checkdir, relpath):
     """
     Dedup command prints list of duplicate files in one or more checkdirs
     """
