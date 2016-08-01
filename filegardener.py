@@ -25,7 +25,7 @@ logging.getLogger(__name__).addHandler(NullHandler())
 
 LOGGER = logging.getLogger(__name__)
 
-__version__ = '1.2.1' 
+__version__ = '1.3.1' 
 __author__ = 'Steve Morin'
 __script_name__ = 'filegardener'
 
