@@ -65,15 +65,6 @@ test_data/emptydirs/other/subdir1/subsubdir2
 test_data/emptydirs/other/subdir1/subsubdir2/subsubsubdir1
 test_data/emptydirs/other/subdir1/subsubdir3
 test_data/emptydirs/seconddir
-test_data/identialdirs
-test_data/identialdirs/firstdir
-test_data/identialdirs/firstdir/EGG-INFO
-test_data/identialdirs/firstdir/liten-0.1.5-py2.5
-test_data/identialdirs/firstdir/liten-0.1.5-py2.5/EGG-INFO
-test_data/identialdirs/seconddir
-test_data/identialdirs/seconddir/EGG-INFO
-test_data/identialdirs/seconddir/liten-0.1.5-py2.5
-test_data/identialdirs/seconddir/liten-0.1.5-py2.5/EGG-INFO
 test_data/identicaldirs
 test_data/identicaldirs/firstdir
 test_data/identicaldirs/firstdir/EGG-INFO
