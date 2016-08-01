@@ -86,7 +86,7 @@ class TestBasics(object):
     def test_countdirs_three(self):
         """ test countfiles for a set of 20 files """
         # filegardener.configure_logger(True,None)
-        assert filegardener.count_dirs([],[os.path.abspath(os.path.join(os.getcwd(),'./test_data/1dup/firstdir'))]) == 3
+        assert filegardener.count_dirs([],[os.path.abspath(os.path.join(os.getcwd(),'./test_data/1dup/firstdir'))]) == 4
 
     def test_duplicate_one(self):
         """ test that there is only one duplicate"""
@@ -119,7 +119,7 @@ class TestBasics(object):
     def test_only_none(self, testdir):
         only_tester(testdir, noresults=True, reverse=True)
 
-    @pytest.mark.parametrize('testdir',['emptydirs', '7notemptydirs'])
+    @pytest.mark.parametrize('testdir',['emptydirs', '7notemptydirs', '1dup'])
     def test_emptydirs(self, testdir):
         emptydirs_tester(testdir)
         

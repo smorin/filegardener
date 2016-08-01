@@ -151,7 +151,10 @@ def emptydirs_yield(checkdir):
                 is_leaf = False
 
             if len(files) == 0:
-                is_empty = True
+                if is_leaf:
+                    is_empty = True
+                else:
+                    is_empty = parent_dict[os.path.abspath(dirpath)][0]
             else:
                 is_empty = False
 
@@ -161,11 +164,7 @@ def emptydirs_yield(checkdir):
                 entry = parent_dict[my_parent]
                 parent_dict[my_parent] = [is_empty and entry[0], entry[1] + 1]
             else:
-                if is_leaf:
-                    parent_dict[my_parent] = [is_empty,  1]
-                else:
-                    self_entry = parent_dict[os.path.abspath(dirpath)]
-                    parent_dict[my_parent] = [is_empty and self_entry[0], 1]
+                parent_dict[my_parent] = [is_empty,  1]
             
             if is_leaf:
                 if is_empty:

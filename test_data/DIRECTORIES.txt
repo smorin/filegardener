@@ -2,6 +2,7 @@ test_data
 test_data/1dup
 test_data/1dup/firstdir
 test_data/1dup/firstdir/EGG-INFO
+test_data/1dup/firstdir/emptydir
 test_data/1dup/firstdir/liten-0.1.5-py2.5
 test_data/1dup/firstdir/liten-0.1.5-py2.5/EGG-INFO
 test_data/1dup/seconddir
