@@ -204,7 +204,7 @@ def validate_paths(file_paths, basedir, exitonfail, path_tester):
 
 def validatepath_yield(files, basedir, path_tester):
     for file_name in files:
-        with open(file_name, "rb") as f:
+        with open(file_name, "r") as f:
             for line in f:
                 file_path = line.rstrip()
                 if basedir:
