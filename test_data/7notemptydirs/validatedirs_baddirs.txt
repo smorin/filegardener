@@ -1,0 +1,13 @@
+test_data/7notemptydirs/main/subdir1
+test_data/7notemptydirs/main/subdir1/subsubdir1
+test_data/7notemptydirs/main/subdir1/subsubdir2
+nonexistent/
+test_data/7notemptydirs/main/subdir1/subsubdir3
+test_data/7notemptydirs/main/subdir3
+test_data/7notemptydirs/main/subdir3/subsubdir1
+test_data
+test_data/7notemptydirs/main/subdir3/subsubdir1/subsubsubdir1
+test_data/7notemptydirs/other/subdir1/nonexistent
+test_data/7notemptydirs/other/subdir1/subsubdir1
+test_data/7notemptydirs/other/nonexistent
+test_data/7notemptydirs/other/subdir1/subsubdir3

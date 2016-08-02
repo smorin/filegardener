@@ -127,6 +127,131 @@ class TestBasics(object):
     def test_emptydirs_none(self, testdir):
         emptydirs_tester(testdir, noresults=True)
 
+    def test_validatedirs(self):
+        myinputfile = ['test_data/emptydirs/emptydirs_correct_results.txt']
+        mybasedir = os.path.abspath(os.path.join(os.getcwd()))
+        result, count = filegardener.validate_dirs(file=myinputfile, basedir=mybasedir, exitonfail=True)
+        assert result == True and count == 0
+
+    def test_validatedirs_badbase(self):
+        myinputfile = ['test_data/emptydirs/emptydirs_correct_results.txt']
+        mybasedir = os.path.abspath(os.path.join(os.getcwd(),'nonexistent'))
+        result, count = filegardener.validate_dirs(file=myinputfile, basedir=mybasedir, exitonfail=False)
+        assert count == 18 and result == False
+
+    def test_validatedirs_badbase_firstfail(self):
+        myinputfile = ['test_data/emptydirs/emptydirs_correct_results.txt']
+        mybasedir = os.path.abspath(os.path.join(os.getcwd(),'nonexistent'))
+        result, count = filegardener.validate_dirs(file=myinputfile, basedir=mybasedir, exitonfail=True)
+        assert count == 1 and result == False
+        
+    def test_validatedirs_badinputfile(self):
+        myinputfile = ['test_data/empytdirs/nonexistent.txt']
+        mybasedir = os.path.abspath(os.path.join(os.getcwd(),'nonexistent'))
+        with pytest.raises(IOError):
+            result, count = filegardener.validate_dirs(file=myinputfile, basedir=mybasedir, exitonfail=True)
+
+    def test_validatedirs_3baddirs_all(self):
+        myinputfile = ['test_data/7notemptydirs/validatedirs_baddirs.txt']
+        mybasedir = os.path.abspath(os.path.join(os.getcwd()))
+        result, count = filegardener.validate_dirs(file=myinputfile, basedir=mybasedir, exitonfail=False)
+        assert result == False and count == 3
+
+    def test_validatedirs_3baddirs_first(self):
+        myinputfile = ['test_data/7notemptydirs/validatedirs_baddirs.txt']
+        mybasedir = os.path.abspath(os.path.join(os.getcwd()))
+        result, count = filegardener.validate_dirs(file=myinputfile, basedir=mybasedir, exitonfail=True)
+        assert result == False and count == 1
+
+    def test_validatedirs_includesfile_first(self):
+        myinputfile = ['test_data/7notemptydirs/validatedirs_includesfile.txt']
+        mybasedir = os.path.abspath(os.path.join(os.getcwd()))
+        result, count = filegardener.validate_dirs(file=myinputfile, basedir=mybasedir, exitonfail=True)
+        assert result == False and count == 1
+
+    def test_validatedirs_includesfile_all(self):
+        myinputfile = ['test_data/7notemptydirs/validatedirs_includesfile.txt']
+        mybasedir = os.path.abspath(os.path.join(os.getcwd()))
+        result, count = filegardener.validate_dirs(file=myinputfile, basedir=mybasedir, exitonfail=False)
+        assert result == False and count == 1
+        
+    def test_validatedirs_badfileargument(self):
+        myinputfile = 'test_data/7notemptydirs/validatedirs_includesfile.txt'
+        mybasedir = os.path.abspath(os.path.join(os.getcwd()))
+        with pytest.raises(Exception):
+            result, count = filegardener.validate_dirs(file=myinputfile, basedir=mybasedir, exitonfail=False)
+
+
+    def test_dirtest(self):
+        """ this sanity test checks that if a directory path that doesn't exist when joined with a file path that points to a dir that doesn't exist"""
+        mybasedir = os.path.abspath(os.path.join(os.getcwd(),'nonexistent'))
+        file_path = 'test_data/7notemptydirs/main/subdir1'
+        file_path = os.path.abspath(os.path.join(mybasedir, file_path))
+        assert False == filegardener.validate_test_dir(file_path)
+
+    def test_dirtest_path(self):
+        """ this tests the file path joining does what we expects and joins paths with out magically correcting them"""
+        mybasedir = os.path.abspath(os.path.join(os.getcwd(),'nonexistent'))
+        file_path = 'test_data/7notemptydirs/main/subdir1'
+        file_path_join = os.path.abspath(os.path.join(mybasedir, file_path))
+        assert os.path.abspath(os.getcwd())+'/nonexistent/'+file_path == file_path_join
+
+
+    def test_validatefiles(self):
+        myinputfile = ['test_data/identicaldirs/correct_results.txt']
+        mybasedir = os.path.abspath(os.path.join(os.getcwd()))
+        result, count = filegardener.validate_files(file=myinputfile, basedir=mybasedir, exitonfail=True)
+        assert result == True and count == 0
+
+    def test_validatefiles_badbase(self):
+        myinputfile = ['test_data/identicaldirs/correct_results.txt']
+        mybasedir = os.path.abspath(os.path.join(os.getcwd(),'nonexistent'))
+        result, count = filegardener.validate_files(file=myinputfile, basedir=mybasedir, exitonfail=False)
+        assert count == 20 and result == False
+
+    def test_validatefiles_badbase_firstfail(self):
+        myinputfile = ['test_data/identicaldirs/correct_results.txt']
+        mybasedir = os.path.abspath(os.path.join(os.getcwd(),'nonexistent'))
+        result, count = filegardener.validate_files(file=myinputfile, basedir=mybasedir, exitonfail=True)
+        assert count == 1 and result == False
+        
+    def test_validatefiles_badinputfile(self):
+        myinputfile = ['test_data/empytdirs/nonexistent.txt']
+        mybasedir = os.path.abspath(os.path.join(os.getcwd(),'nonexistent'))
+        with pytest.raises(IOError):
+            result, count = filegardener.validate_files(file=myinputfile, basedir=mybasedir, exitonfail=True)
+
+    def test_validatefiles_3dirs_all(self):
+        myinputfile = ['test_data/identicaldirs/validatefiles_includes_3dirs.txt']
+        mybasedir = os.path.abspath(os.path.join(os.getcwd()))
+        result, count = filegardener.validate_files(file=myinputfile, basedir=mybasedir, exitonfail=False)
+        assert result == False and count == 3
+
+    def test_validatefiles_3dirs_first(self):
+        myinputfile = ['test_data/identicaldirs/validatefiles_includes_3dirs.txt']
+        mybasedir = os.path.abspath(os.path.join(os.getcwd()))
+        result, count = filegardener.validate_files(file=myinputfile, basedir=mybasedir, exitonfail=True)
+        assert result == False and count == 1
+
+    def test_validatefiles_includes_badfile_first(self):
+        myinputfile = ['test_data/identicaldirs/validatefiles_includes_3nonexistent_files.txt']
+        mybasedir = os.path.abspath(os.path.join(os.getcwd()))
+        result, count = filegardener.validate_files(file=myinputfile, basedir=mybasedir, exitonfail=True)
+        assert result == False and count == 1
+
+    def test_validatefiles_includes_badfile_all(self):
+        myinputfile = ['test_data/identicaldirs/validatefiles_includes_3nonexistent_files.txt']
+        mybasedir = os.path.abspath(os.path.join(os.getcwd()))
+        result, count = filegardener.validate_files(file=myinputfile, basedir=mybasedir, exitonfail=False)
+        assert result == False and count == 3
+        
+    def test_validatefiles_badfileargument(self):
+        myinputfile = 'test_data/7notemptydirs/validatedirs_includesfile.txt'
+        mybasedir = os.path.abspath(os.path.join(os.getcwd()))
+        with pytest.raises(Exception):
+            result, count = filegardener.validate_files(file=myinputfile, basedir=mybasedir, exitonfail=False)
+
+
     @pytest.mark.parametrize(
         'other, result', (
             ("some string", True),
@@ -207,7 +332,6 @@ def emptydirs_tester(test_dir, noresults=False):
     """ you give this method a path name and it looks uner test_data/ for that directory to test.  
     This test assumes that the order the duplicates will be found will be the same"""
     test_basedir = os.path.abspath(os.path.join(os.getcwd(),'test_data',test_dir))
-    validation_file_name = ''
 
     validation_file_name = 'emptydirs_correct_results.txt'
         

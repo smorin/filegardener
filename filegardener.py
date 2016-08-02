@@ -25,7 +25,7 @@ logging.getLogger(__name__).addHandler(NullHandler())
 
 LOGGER = logging.getLogger(__name__)
 
-__version__ = '1.3.1' 
+__version__ = '1.4.1' 
 __author__ = 'Steve Morin'
 __script_name__ = 'filegardener'
 
@@ -110,6 +110,119 @@ def count_dirs(ctx, checkdir):
             LOGGER.debug(dirpath)
             innercount = innercount + 1
     return innercount
+
+@cli.command(context_settings=CONTEXT_SETTINGS)
+@click.argument('file', nargs=-1, required=True, type=click.Path(exists=True, file_okay=True, dir_okay=False, readable=True, resolve_path=True))
+@click.option('--basedir', '-b', default=False, help='base directory to join each file path to', required=False, type=click.Path(exists=True, file_okay=False, dir_okay=True, readable=True, resolve_path=True))
+@click.pass_obj
+def rmfiles(ctx, file, basedir):
+    """
+    rmfiles will delete a set of files listed in the input file(s)
+    """
+    click.echo("not implemented yet")
+    sys.exit(1)
+    failed = False
+
+@cli.command(context_settings=CONTEXT_SETTINGS)
+@click.argument('file', nargs=-1, required=True, type=click.Path(exists=True, file_okay=True, dir_okay=False, readable=True, resolve_path=True))
+@click.option('--basedir', '-b', default=False, help='base directory to join each file path to', required=False, type=click.Path(exists=True, file_okay=False, dir_okay=True, readable=True, resolve_path=True))
+@click.pass_obj
+def rmdirs(ctx, file, basedir):
+    """
+    rmfiles will delete a set of dirs listed in the input file(s)
+    """
+    click.echo("not implemented yet")
+    sys.exit(1)
+    failed = False
+
+@cli.command(context_settings=CONTEXT_SETTINGS)
+@click.argument('destdir', nargs=1, required=True, type=click.Path(exists=True, file_okay=False, dir_okay=True, readable=True, resolve_path=True))
+@click.option('--basedir', '-b', default=False, help='base directory to join each file path to', required=False, type=click.Path(exists=True, file_okay=False, dir_okay=True, readable=True, resolve_path=True))
+@click.option('--targetdir', '-b', default=False, help='location to move all files from', required=True, type=click.Path(exists=True, file_okay=False, dir_okay=True, readable=True, resolve_path=True))
+@click.option('--file', '-f', default=False, help='file for input files', required=True, type=click.Path(exists=True, file_okay=True, dir_okay=False, readable=True, resolve_path=True))
+@click.pass_obj
+def mvbase(ctx, destdir, basedir, file):
+    """
+    mvbase will move a set of files from their locations, at target directory to destdir
+    """
+    click.echo("not implemented yet")
+    sys.exit(1)
+    failed = False
+
+@cli.command(context_settings=CONTEXT_SETTINGS)
+@click.argument('file', nargs=-1, required=True, type=click.Path(exists=True, file_okay=True, dir_okay=False, readable=True, resolve_path=True))
+@click.option('--basedir', '-b', default=False, help='base directory to join each file path to', required=False, type=click.Path(exists=True, file_okay=False, dir_okay=True, readable=True, resolve_path=True))
+@click.option('--exitonfail/--no-exitonfail', '-e', default=False, help='turn on/off exit on first failure')
+@click.pass_obj
+def validatefiles(ctx, file, basedir, exitonfail):
+    """
+    validatefiles reads in a file of file paths and checks that it exists
+    """
+    Result, Count = validate_files(file, basedir, exitonfail)
+    if not Result:
+        sys.exit(1)
+    else:
+        sys.exit(0)
+
+@cli.command(context_settings=CONTEXT_SETTINGS)
+@click.argument('file', nargs=-1, required=True, type=click.Path(exists=True, file_okay=True, dir_okay=False, readable=True, resolve_path=True))
+@click.option('--basedir', '-b', default=False, help='base directory to join each file path to', required=False, type=click.Path(exists=True, file_okay=False, dir_okay=True, readable=True, resolve_path=True))
+@click.option('--exitonfail/--no-exitonfail', '-e', default=False, help='turn on/off exit on first failure')
+@click.pass_obj
+def validatedirs(ctx, file, basedir, exitonfail):
+    """
+    validatedirs reads in a file of dir paths and checks that it exists and passes test
+    """
+    Result, Count = validate_dirs(file, basedir, exitonfail)
+    if not Result:
+        sys.exit(1)
+    else:
+        sys.exit(0)
+
+def validate_files(file, basedir, exitonfail):
+    return validate_paths(file, basedir, exitonfail, validate_test_file)
+
+def validate_dirs(file, basedir, exitonfail):
+    return validate_paths(file, basedir, exitonfail, validate_test_dir)
+
+def validate_paths(file_paths, basedir, exitonfail, path_tester):
+    failed = False
+    count = 0
+    if type(file_paths) == str:
+        raise Exception("Wrong input type should be a list")
+
+    for failed_path in validatepath_yield(file_paths, basedir, path_tester):
+        failed = True
+        count = count + 1
+        click.echo(failed_path)
+        if failed and exitonfail:
+            return False, count
+    if failed:
+        return False, count
+    else:
+        return True, count
+
+def validatepath_yield(files, basedir, path_tester):
+    for file_name in files:
+        with open(file_name, "rb") as f:
+            for line in f:
+                file_path = line.rstrip('\n')
+                if basedir:
+                    file_path = os.path.abspath(os.path.join(basedir, file_path))
+                if not path_tester(file_path):
+                    yield file_path
+
+def validate_test_file(file_path):
+    if os.path.isfile(file_path):
+        return True
+    else:
+        return False
+
+def validate_test_dir(dir_path):
+    if os.path.isdir(dir_path):
+        return True
+    else:
+        return False
 
 @cli.command(context_settings=CONTEXT_SETTINGS)
 @click.argument('checkdir', nargs=-1, required=True, type=click.Path(exists=True, file_okay=False, dir_okay=True, readable=True, resolve_path=True))
