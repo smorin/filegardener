@@ -22,7 +22,7 @@ class TestBasics(object):
         """
         with io.open("test_data/DIRECTORIES.txt", "r", encoding="utf8") as fp:
             for line in fp:
-                dirpath = line.rstrip('\n')
+                dirpath = line.rstrip()
                 if not os.path.exists(dirpath):
                     os.makedirs(dirpath)
                 
@@ -289,7 +289,7 @@ def dup_tester(test_dir, reverse=False, noresults=False):
             i = 0
             result_lookup = {}
             for line in f:
-                file_name = line.rstrip('\n') # remove new lines from each line
+                file_name = line.rstrip() # remove new lines from each line
                 file_name = os.path.abspath(os.path.join(os.getcwd(), file_name))
                 result_lookup[file_name] = file_name
             for line in generator:
@@ -322,7 +322,7 @@ def only_tester(test_dir, reverse=False, noresults=False):
             i = 0
             result_lookup = {}
             for line in f:
-                file_name = line.rstrip('\n') # remove new lines from each line
+                file_name = line.rstrip() # remove new lines from each line
                 file_name = os.path.abspath(os.path.join(os.getcwd(), file_name))
                 result_lookup[file_name] = file_name
             for line in generator:
@@ -346,7 +346,7 @@ def emptydirs_tester(test_dir, noresults=False):
             i = 0
             result_lookup = {}
             for line in f:
-                file_name = line.rstrip('\n') # remove new lines from each line
+                file_name = line.rstrip() # remove new lines from each line
                 file_name = os.path.abspath(os.path.join(os.getcwd(), file_name))
                 result_lookup[file_name] = file_name
             for line in generator:
