@@ -6,7 +6,7 @@ unittests: ## Run the unit tests
 	@echo ""
 	@echo "Alternative use pytest directly and install pytest and run the pytest runner"
 	@# https://pytest.org/latest/goodpractices.html
-	@echo "> py.test tests"
+	@echo "> py.test -v tests"
 
 py.test:
 	@which py.test || (echo "py.text is not installed: $$?\n Install:\n > pip install pytest pytest-cov"; exit 1)
