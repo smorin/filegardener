@@ -26,7 +26,7 @@ logging.getLogger(__name__).addHandler(NullHandler())
 
 LOGGER = logging.getLogger(__name__)
 
-__version__ = '1.4.1' 
+__version__ = '1.6.2' 
 __author__ = 'Steve Morin'
 __script_name__ = 'filegardener'
 
@@ -221,7 +221,7 @@ def mvbase(ctx, destdir, basedir, file):
     """
     mvbase will move a set of files from their locations, at target directory to destdir
     """
-    click.echo("not implemented yet")
+    click.echo("TODO: not implemented yet")
     sys.exit(1)
     failed = False
 

@@ -12,6 +12,7 @@ Contents:
    :maxdepth: 2
 
 
+.. include:: ../README.rst
 
 Indices and tables
 ==================
