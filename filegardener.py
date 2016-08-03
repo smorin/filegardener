@@ -143,7 +143,7 @@ def rmfile(file_path):
     result = False
     reason = None
     if validate_test_file(file_path):
-        os.remove(file_path)
+        # os.remove(file_path) # tmp don't remove files till tested
         result = True
     else:
         reason = "wasn't a file"
