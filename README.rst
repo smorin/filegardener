@@ -18,11 +18,18 @@ File gardener - file maintenance utilities - file dedup, only copy detection, pr
 * `Github Page <https://github.com/smorin/filegardener>`_
 * `Issue Tracking <https://github.com/smorin/filegardener/issues>`_
 
+
+Contributions
+-------------
+
+I am completely open to contributions, just open a issue if you want to suggest a feature so we can discuss.  If you want a project I need help implementing `mvbase`. I don't accept pull requests with out unit tests, you can look at examples
+
+
 Install
 -------
 ::
 
-	pip install filegardener
+	> pip install filegardener
 
 If you don't have pip it's also easy to install https://pip.pypa.io/en/stable/installing/
 
@@ -32,6 +39,12 @@ When filegardener installs it's installed on the commandline for you so you can 
 
 	> filegardener --help
 
+
+Build
+-----
+::
+
+	> make
 
 Usage Summary
 -------------
