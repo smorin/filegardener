@@ -5,6 +5,8 @@ import filegardener
 import os
 import os.path
 import io
+import shutil
+from click.testing import CliRunner
 
 
 # Reference: http://pythontesting.net/framework/pytest/pytest-session-scoped-fixtures/
@@ -250,6 +252,30 @@ class TestBasics(object):
         mybasedir = os.path.abspath(os.path.join(os.getcwd()))
         with pytest.raises(Exception):
             result, count = filegardener.validate_files(file=myinputfile, basedir=mybasedir, exitonfail=False)
+
+    @pytest.fixture(scope='function')
+    def file_dir_identicaldirs(self, request, tmpdir_factory):
+        # tmpdir is a Reference: http://py.readthedocs.io/en/latest/path.html py.path.local object
+        tmpdir = tmpdir_factory.mktemp('identicaldirs', numbered=True)
+        def fin():
+            print ("cleanup testing")
+            tmpdir.remove(rec=1) # remove the directory if the test passes 
+        request.addfinalizer(fin)
+        return tmpdir
+
+
+    def test_rmfile_valid(self, file_dir_identicaldirs):
+        runner = CliRunner()
+        base_tmpdir = str(file_dir_identicaldirs) # string of full path to tmp dir
+        test_data_dir = os.path.abspath(os.path.join(os.getcwd(), 'test_data', 'identicaldirs'))
+        base_tmpdir_dst = os.path.abspath(os.path.join(base_tmpdir, 'test_data', 'identicaldirs'))
+        file_of_items_to_remove = os.path.abspath(os.path.join(base_tmpdir, 'test_data', 'identicaldirs', 'correct_results.txt'))
+        shutil.copytree(test_data_dir, base_tmpdir_dst)
+        result = runner.invoke(filegardener.cli, ['rmfiles', '--basedir='+base_tmpdir, file_of_items_to_remove])
+        #assert test_data_dir == base_tmpdir_dst
+        if result.exit_code != 0:
+            print(result.output)
+        assert result.exit_code == 0
 
 
     @pytest.mark.parametrize(

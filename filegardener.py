@@ -115,18 +115,48 @@ def count_dirs(ctx, checkdir):
 @cli.command(context_settings=CONTEXT_SETTINGS)
 @click.argument('file', nargs=-1, required=True, type=click.Path(exists=True, file_okay=True, dir_okay=False, readable=True, resolve_path=True))
 @click.option('--basedir', '-b', default=False, help='base directory to join each file path to', required=False, type=click.Path(exists=True, file_okay=False, dir_okay=True, readable=True, resolve_path=True))
+@click.option('--exitonfail/--no-exitonfail', '-e', default=False, help='turn on/off exit on first failure')
 @click.pass_obj
-def rmfiles(ctx, file, basedir):
+def rmfiles(ctx, file, basedir, exitonfail):
     """
     rmfiles will delete a set of files listed in the input file(s)
-    """
-    click.echo("not implemented yet")
-    sys.exit(1)
-    failed = False
+    """    
+    if not type(file) == list:
+        raise Exception("Wrong input type should be a list")
+    
+    result = True
+    reason = None
+    
+    for file_name in file:
+        with io.open(file_name, "r", encoding="utf8") as f:
+            for line in f:
+                file_path = line.rstrip()
+                if basedir:
+                    file_path = os.path.abspath(os.path.join(basedir, file_path))
+                result, reason = rmfile(file_path)
+                if not result:
+                    click.echo("%s\t%s" % (file_path, reason))
+                    if exitoffail:
+                        sys.exit(1)
+
+def rmfile(file_path):
+    result = False
+    reason = None
+    if validate_test_file(file_path):
+        os.remove(file_path)
+        result = True
+    else:
+        reason = "wasn't a file"
+        # try:
+        # except Exception as excep:
+        #     result = False
+    return result, reason
+    
 
 @cli.command(context_settings=CONTEXT_SETTINGS)
 @click.argument('file', nargs=-1, required=True, type=click.Path(exists=True, file_okay=True, dir_okay=False, readable=True, resolve_path=True))
 @click.option('--basedir', '-b', default=False, help='base directory to join each file path to', required=False, type=click.Path(exists=True, file_okay=False, dir_okay=True, readable=True, resolve_path=True))
+@click.option('--exitonfail/--no-exitonfail', '-e', default=False, help='turn on/off exit on first failure')
 @click.pass_obj
 def rmdirs(ctx, file, basedir):
     """
@@ -134,7 +164,6 @@ def rmdirs(ctx, file, basedir):
     """
     click.echo("not implemented yet")
     sys.exit(1)
-    failed = False
 
 @cli.command(context_settings=CONTEXT_SETTINGS)
 @click.argument('destdir', nargs=1, required=True, type=click.Path(exists=True, file_okay=False, dir_okay=True, readable=True, resolve_path=True))
@@ -189,7 +218,7 @@ def validate_dirs(file, basedir, exitonfail):
 def validate_paths(file_paths, basedir, exitonfail, path_tester):
     failed = False
     count = 0
-    if type(file_paths) == str:
+    if not type(file_paths) == list:
         raise Exception("Wrong input type should be a list")
 
     for failed_path in validatepath_yield(file_paths, basedir, path_tester):
