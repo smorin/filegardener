@@ -2,7 +2,7 @@
 click
 
 # development requirements
-pytest
+pytest>=2.8
 pytest-cov
 pylint
 pex
