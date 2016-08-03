@@ -106,10 +106,13 @@ def count_dirs(ctx, checkdir):
     if type(checkdir) == str:
         raise Exception("Wrong input type should be a list")
     for mydir in checkdir:
-        innercount = innercount - 1 # decrement by one so it excludes counting itself
+        once = False
         for dirpath, dirnames, files in os.walk(mydir):
             LOGGER.debug(dirpath)
+            once = True
             innercount = innercount + 1
+        if once:
+            innercount = innercount - 1 # decrement by one so it excludes counting itself
     return innercount
 
 @cli.command(context_settings=CONTEXT_SETTINGS)
@@ -121,11 +124,12 @@ def rmfiles(ctx, file, basedir, exitonfail):
     """
     rmfiles will delete a set of files listed in the input file(s)
     """    
-    if not type(file) == list:
-        raise Exception("Wrong input type should be a list")
+    if not (type(file) == list or type(file) == tuple):
+        raise Exception("Wrong input type should be a list: %s" % type(file))
     
     result = True
     reason = None
+    failed_once = False
     
     for file_name in file:
         with io.open(file_name, "r", encoding="utf8") as f:
@@ -133,23 +137,29 @@ def rmfiles(ctx, file, basedir, exitonfail):
                 file_path = line.rstrip()
                 if basedir:
                     file_path = os.path.abspath(os.path.join(basedir, file_path))
-                result, reason = rmfile(file_path)
+                try:
+                    result, reason = rmfile(file_path)
+                except OSError as excep:
+                    result = False
+                    reason = str(excep)
                 if not result:
                     click.echo("%s\t%s" % (file_path, reason))
-                    if exitoffail:
+                    failed_once = True
+                    if exitonfail:
                         sys.exit(1)
+
+    if failed_once:
+        sys.exit(1)
 
 def rmfile(file_path):
     result = False
     reason = None
     if validate_test_file(file_path):
-        # os.remove(file_path) # tmp don't remove files till tested
+        os.remove(file_path) # tmp don't remove files till tested
         result = True
     else:
+        result = False
         reason = "wasn't a file"
-        # try:
-        # except Exception as excep:
-        #     result = False
     return result, reason
     
 
@@ -158,12 +168,48 @@ def rmfile(file_path):
 @click.option('--basedir', '-b', default=False, help='base directory to join each file path to', required=False, type=click.Path(exists=True, file_okay=False, dir_okay=True, readable=True, resolve_path=True))
 @click.option('--exitonfail/--no-exitonfail', '-e', default=False, help='turn on/off exit on first failure')
 @click.pass_obj
-def rmdirs(ctx, file, basedir):
+def rmdirs(ctx, file, basedir, exitonfail):
     """
-    rmfiles will delete a set of dirs listed in the input file(s)
+    rmdirs will delete a set of dirs listed in the input file(s)
     """
-    click.echo("not implemented yet")
-    sys.exit(1)
+    if not (type(file) == list or type(file) == tuple):
+        raise Exception("Wrong input type should be a list: %s" % type(file))
+    
+    result = True
+    reason = None
+    failed_once = False
+    
+    
+    for file_name in file:
+        with io.open(file_name, "r", encoding="utf8") as f:
+            all_dirs = f.readlines()
+            all_dirs = sorted(all_dirs, key=len, reverse=True) # so long child dirs get removed first
+            for line in all_dirs:
+                file_path = line.rstrip()
+                if basedir:
+                    file_path = os.path.abspath(os.path.join(basedir, file_path))
+                try:
+                    result, reason = rmdir(file_path)
+                except OSError as excep:
+                    result = False
+                    reason = str(excep)
+                if not result:
+                    click.echo("%s\t%s" % (file_path, reason))
+                    failed_once = True
+                    if exitonfail:
+                        sys.exit(1)
+    if failed_once:
+        sys.exit(1)
+
+def rmdir(dir_path):
+    result = False
+    reason = None
+    if validate_test_dir(dir_path):
+        os.rmdir(dir_path) # tmp don't remove files till tested
+        result = True
+    else:
+        reason = "wasn't a directory"
+    return result, reason
 
 @cli.command(context_settings=CONTEXT_SETTINGS)
 @click.argument('destdir', nargs=1, required=True, type=click.Path(exists=True, file_okay=False, dir_okay=True, readable=True, resolve_path=True))

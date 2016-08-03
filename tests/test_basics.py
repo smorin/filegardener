@@ -259,23 +259,127 @@ class TestBasics(object):
         tmpdir = tmpdir_factory.mktemp('identicaldirs', numbered=True)
         def fin():
             print ("cleanup testing")
+            # TODO: figure out how to access results to not to remove on failure
+            # Reference: https://github.com/pytest-dev/pytest/blob/ffb583ae9140bfa14b28ff44245ec0b16ad760a7/doc/en/example/simple.rst
             tmpdir.remove(rec=1) # remove the directory if the test passes 
         request.addfinalizer(fin)
         return tmpdir
 
 
-    def test_rmfile_valid(self, file_dir_identicaldirs):
+    def test_rmfiles_valid(self, file_dir_identicaldirs):
         runner = CliRunner()
         base_tmpdir = str(file_dir_identicaldirs) # string of full path to tmp dir
-        test_data_dir = os.path.abspath(os.path.join(os.getcwd(), 'test_data', 'identicaldirs'))
-        base_tmpdir_dst = os.path.abspath(os.path.join(base_tmpdir, 'test_data', 'identicaldirs'))
-        file_of_items_to_remove = os.path.abspath(os.path.join(base_tmpdir, 'test_data', 'identicaldirs', 'correct_results.txt'))
+        test_dir = 'identicaldirs'
+        test_data_dir = os.path.abspath(os.path.join(os.getcwd(), 'test_data', test_dir))
+        base_tmpdir_dst = os.path.abspath(os.path.join(base_tmpdir, 'test_data', test_dir))
+        base_tmpdir_dst_filebase = os.path.abspath(os.path.join(base_tmpdir, 'test_data', test_dir, 'seconddir'))
+        file_of_items_to_remove = os.path.abspath(os.path.join(base_tmpdir, 'test_data', test_dir, 'correct_results.txt'))
         shutil.copytree(test_data_dir, base_tmpdir_dst)
         result = runner.invoke(filegardener.cli, ['rmfiles', '--basedir='+base_tmpdir, file_of_items_to_remove])
         #assert test_data_dir == base_tmpdir_dst
+        
+        count = filegardener.count_files({}, [base_tmpdir_dst_filebase])
+        
         if result.exit_code != 0:
             print(result.output)
-        assert result.exit_code == 0
+            
+        assert result.exit_code == 0 and count == 0
+        
+    def test_rmfile_false_isdir(self, file_dir_identicaldirs):
+        runner = CliRunner()
+        base_tmpdir = str(file_dir_identicaldirs) # string of full path to tmp dir
+        test_dir = 'identicaldirs'
+        test_data_dir = os.path.abspath(os.path.join(os.getcwd(), 'test_data', test_dir))
+        base_tmpdir_dst = os.path.abspath(os.path.join(base_tmpdir, 'test_data', test_dir))
+        base_tmpdir_dst_filebase = os.path.abspath(os.path.join(base_tmpdir, 'test_data', test_dir, 'seconddir'))
+        file_of_items_to_copy = os.path.abspath(os.path.join(test_data_dir, 'correct_results.txt'))
+        shutil.copy(file_of_items_to_copy, base_tmpdir)
+        result, reason = filegardener.rmfile(os.path.join(base_tmpdir))
+        #assert test_data_dir == base_tmpdir_dst
+            
+        assert result == False and reason == "wasn't a file"
+        
+    def test_rmfile_false_isfile(self, file_dir_identicaldirs):
+        runner = CliRunner()
+        base_tmpdir = str(file_dir_identicaldirs) # string of full path to tmp dir
+        test_dir = 'identicaldirs'
+        test_data_dir = os.path.abspath(os.path.join(os.getcwd(), 'test_data', test_dir))
+        base_tmpdir_dst = os.path.abspath(os.path.join(base_tmpdir, 'test_data', test_dir))
+        base_tmpdir_dst_filebase = os.path.abspath(os.path.join(base_tmpdir, 'test_data', test_dir, 'seconddir'))
+        file_of_items_to_copy = os.path.abspath(os.path.join(test_data_dir, 'correct_results.txt'))
+        shutil.copy(file_of_items_to_copy, base_tmpdir)
+        result, reason = filegardener.rmfile(os.path.join(base_tmpdir, 'correct_results.txt'))
+        #assert test_data_dir == base_tmpdir_dst
+        
+        assert result == True and reason == None
+
+    def test_rmfiles_1valid_file(self, file_dir_identicaldirs):
+        runner = CliRunner()
+        base_tmpdir = str(file_dir_identicaldirs) # string of full path to tmp dir
+        test_dir = '1dup'
+        test_data_dir = os.path.abspath(os.path.join(os.getcwd(), 'test_data', test_dir))
+        base_tmpdir_dst = os.path.abspath(os.path.join(base_tmpdir, 'test_data', test_dir))
+        base_tmpdir_dst_filebase = os.path.abspath(os.path.join(base_tmpdir, 'test_data', test_dir, 'seconddir'))
+        file_of_items_to_remove = os.path.abspath(os.path.join(base_tmpdir, 'test_data', test_dir, 'correct_results.txt'))
+        shutil.copytree(test_data_dir, base_tmpdir_dst)
+        if not (os.path.exists(base_tmpdir_dst_filebase) and os.path.isdir(base_tmpdir_dst_filebase)):
+            raise Exception("Dir should exist and doesn't")
+        
+        count_before = filegardener.count_files({}, [base_tmpdir_dst_filebase])
+        
+        result = runner.invoke(filegardener.cli, ['rmfiles', '--basedir='+base_tmpdir, file_of_items_to_remove])
+        #assert test_data_dir == base_tmpdir_dst
+        
+        count_after = filegardener.count_files({}, [base_tmpdir_dst_filebase])
+        
+        if result.exit_code != 0:
+            print(result.output)
+            
+        assert result.exit_code == 0 and (count_before - count_after) == 1
+        
+    def test_rmdirs_valid(self, file_dir_identicaldirs):
+        runner = CliRunner()
+        base_tmpdir = str(file_dir_identicaldirs) # string of full path to tmp dir
+        test_dir = 'emptydirs'
+        test_data_dir = os.path.abspath(os.path.join(os.getcwd(), 'test_data', test_dir))
+        base_tmpdir_dst = os.path.abspath(os.path.join(base_tmpdir, 'test_data', test_dir))
+        base_tmpdir_dst_filebase = os.path.abspath(os.path.join(base_tmpdir, 'test_data', test_dir, 'seconddir'))
+        file_of_items_to_remove = os.path.abspath(os.path.join(base_tmpdir, 'test_data', test_dir, 'emptydirs_correct_results.txt'))
+        shutil.copytree(test_data_dir, base_tmpdir_dst)
+        result = runner.invoke(filegardener.cli, ['rmdirs', '--basedir='+base_tmpdir, file_of_items_to_remove])
+        #assert test_data_dir == base_tmpdir_dst
+        
+        count = filegardener.count_dirs({}, [base_tmpdir_dst_filebase])
+        
+        if result.exit_code != 0:
+            print(result.output)
+            
+        assert result.exit_code == 0 and count == 0
+
+    def test_rmdirs_7notemptydirs(self, file_dir_identicaldirs):
+        runner = CliRunner()
+        base_tmpdir = str(file_dir_identicaldirs) # string of full path to tmp dir
+        test_dir = '7notemptydirs'
+        test_data_dir = os.path.abspath(os.path.join(os.getcwd(), 'test_data', test_dir))
+        base_tmpdir_dst = os.path.abspath(os.path.join(base_tmpdir, 'test_data', test_dir))
+        file_of_items_to_remove = os.path.abspath(os.path.join(base_tmpdir, 'test_data', test_dir, 'emptydirs_correct_results.txt'))
+        shutil.copytree(test_data_dir, base_tmpdir_dst)
+        if not (os.path.exists(base_tmpdir_dst) and os.path.isdir(base_tmpdir_dst)):
+            raise Exception("Dir should exist and doesn't")
+        
+        count_before = filegardener.count_dirs({}, [base_tmpdir_dst])
+        
+        result = runner.invoke(filegardener.cli, ['rmdirs', '--basedir='+base_tmpdir, file_of_items_to_remove])
+        #assert test_data_dir == base_tmpdir_dst
+        
+        count_after = filegardener.count_dirs({}, [base_tmpdir_dst])
+        
+        if result.exit_code != 0:
+            print(result.output)
+        
+        # will have 9 dirs removed
+        
+        assert result.exit_code == 0 and (count_before - count_after) == 9
 
 
     @pytest.mark.parametrize(
