@@ -78,7 +78,7 @@ for dirpath, dirnames, files in os.walk('test_data'):
     for filename in files:
         test_data_files.append(os.path.join(dirpath,filename))
 
-# add the version file to the distribution
+# this doesn't add it to the source distribution - you need to add it to the MANIFEST.in
 test_data_files.append('VERSION')
 
 setup(
