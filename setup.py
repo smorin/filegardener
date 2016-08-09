@@ -78,6 +78,9 @@ for dirpath, dirnames, files in os.walk('test_data'):
     for filename in files:
         test_data_files.append(os.path.join(dirpath,filename))
 
+# add the version file to the distribution
+test_data_files.append('VERSION')
+
 setup(
     name='filegardener',
     author='Steve Morin',
