@@ -45,6 +45,14 @@ class TestBasics(object):
         """ Example of a simple unit test """
         assert "string" == "string"
 
+    def test_versions_equal(self):
+        """ Example of a simple unit test """
+        version = ''
+        with open('VERSION') as file:
+            version = file.readline()
+            version = version.rstrip()
+        assert version == filegardener.__version__
+
     def test_sanity_check(self):
         """ Checking that filegardener runner can be called """
         assert filegardener.__version__ != None

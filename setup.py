@@ -7,7 +7,6 @@ from glob import glob
 
 # sys.path.insert(0, os.path.abspath('src'))
 
-from filegardener import __version__, __author__
 # import filegardener
 try:
     from setuptools import setup
@@ -57,8 +56,15 @@ class PyTest(TestCommand):
 
 from setuptools import find_packages
 
+version = ''
+
+with open('VERSION') as file:
+    version = file.readline()
+    version = version.rstrip()
+
 with open('README.rst') as file:
     long_description = file.read()
+
 
 
 requires = ['Click']
@@ -74,9 +80,9 @@ for dirpath, dirnames, files in os.walk('test_data'):
 
 setup(
     name='filegardener',
-    author=__author__,
+    author='Steve Morin',
     author_email='steve@stevemorin.com',
-    version=__version__,
+    version=version,
     url='https://github.com/smorin/filegardener',
     include_package_data=True,
     install_requires=requires,
