@@ -8,6 +8,11 @@ import io
 import shutil
 from click.testing import CliRunner
 
+import pdb
+
+def debug():
+    import pdb; pdb.set_trace()
+
 
 # Reference: http://pythontesting.net/framework/pytest/pytest-session-scoped-fixtures/
 # Reference: http://pythontesting.net/framework/pytest/pytest-fixtures/
@@ -27,7 +32,16 @@ class TestBasics(object):
                 dirpath = line.rstrip()
                 if not os.path.exists(dirpath):
                     os.makedirs(dirpath)
-                
+        src = 'test_data/onlycopysymfirst/firstdir/brokensymlink' # symlink file that is created
+        dst = 'test_data/onlycopysymfirst/firstdir/doesnotexist' # symlink points to this
+        
+        if not os.path.lexists(src): # lexists will return true even for broken symlinks
+            os.symlink(dst, src)
+        
+        src = 'test_data/onlycopysymsecond/seconddir/brokensymlink' # symlink file that is created
+        dst = 'test_data/onlycopysymsecond/seconddir/doesnotexist' # symlink points to this
+        if not os.path.lexists(src): # lexists will return true even for broken symlinks
+            os.symlink(dst, src)
 
 
     possible_keys = pytest.mark.parametrize('key', ('accept', 'ACCEPT', 'aCcEpT', 'Accept'))
@@ -128,6 +142,10 @@ class TestBasics(object):
     @pytest.mark.parametrize('testdir',['emptydirs', 'identicaldirs'])
     def test_only_none(self, testdir):
         only_tester(testdir, noresults=True, reverse=True)
+
+    @pytest.mark.parametrize('testdir',['onlycopy', 'onlycopysymfirst', 'onlycopysymsecond'])
+    def test_only_none(self, testdir):
+        only_tester(testdir, noresults=False, reverse=False)
 
     @pytest.mark.parametrize('testdir',['emptydirs', '7notemptydirs', '1dup'])
     def test_emptydirs(self, testdir):

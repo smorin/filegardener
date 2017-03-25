@@ -26,7 +26,7 @@ logging.getLogger(__name__).addHandler(NullHandler())
 
 LOGGER = logging.getLogger(__name__)
 
-__version__ = '1.6.6' 
+__version__ = '1.6.7' 
 __author__ = 'Steve Morin'
 __script_name__ = 'filegardener'
 
@@ -462,7 +462,7 @@ def get_files_and_size_from_dir(topdir):
     all of these files."""
     if not os.path.isdir(topdir):
         raise Exception("You submitted a director that isn't one'")
-    files = [ (os.path.abspath(os.path.join(dirpath,filename)),os.path.getsize(os.path.join(dirpath,filename))) for dirpath, dirnames, files in os.walk(topdir) for filename in files ]
+    files = [ (os.path.abspath(os.path.join(dirpath,filename)),os.path.getsize(os.path.join(dirpath,filename))) for dirpath, dirnames, files in os.walk(topdir) for filename in files if not os.path.islink(os.path.join(dirpath,filename))]
     return files
     
 def create_size_dict(files_size):
@@ -514,15 +514,17 @@ def get_only_copy(size_dict, topdir):
     files = []
     
     if_match_return_true = False
-
+    
+    # The logic is for all the directories and for each file in each directory
+    # test the following if is_not_symlink and (not in size or is_not_match )
     files = [ os.path.abspath(os.path.join(dirpath,filename)) # return absolute path of file that matches criteria
                 for dirpath, dirnames, files in os.walk(topdir) 
                     for filename in files 
-                        if os.path.getsize(os.path.join(dirpath,filename)) not in size_dict 
+                        if not os.path.islink(os.path.join(dirpath,filename)) and (os.path.getsize(os.path.join(dirpath,filename)) not in size_dict 
                         or is_match(os.path.getsize(os.path.join(dirpath,filename)), # size
                         os.path.abspath(os.path.join(dirpath,filename)), # file
                         size_dict[os.path.getsize(os.path.join(dirpath,filename))], # file_list
-                        if_match_return_true) ] # if_match_return_value
+                        if_match_return_true)) ] # if_match_return_value
     return files 
   
 
