@@ -13,4 +13,4 @@ install:
   - pip install -r requirements.txt
   - pip list
 # command to run tests
-script: make unittests
+script: make test
