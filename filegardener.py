@@ -2,6 +2,7 @@
 """ This is the runner module that collects config information and runs the
 initial code
 """
+from __future__ import print_function
 import click
 import logging
 import sys
@@ -26,7 +27,11 @@ logging.getLogger(__name__).addHandler(NullHandler())
 
 LOGGER = logging.getLogger(__name__)
 
-__version__ = '1.6.7' 
+def eprint(*args, **kwargs):
+    """ prints to stderr, using the 'from __future__ import print_function' """
+    print(*args, file=sys.stderr, **kwargs)
+
+__version__ = '1.6.8' 
 __author__ = 'Steve Morin'
 __script_name__ = 'filegardener'
 
@@ -412,20 +417,21 @@ def dedup_yield(srcdir, checkdir):
 @click.option('--srcdir', '-s', multiple=True, required=True, help='directories to check',  type=click.Path(exists=True, file_okay=False, dir_okay=True, readable=True, resolve_path=True))
 @click.argument('checkdir', nargs=-1, required=True, type=click.Path(exists=True, file_okay=False, dir_okay=True, readable=True, resolve_path=True))
 @click.option('--relpath/--no-relpath', '-r', default=False, help='turn on/off relative path - default off')
+@click.option('--failonerror/--no-failonerror', '-f', default=True, help='turn on/off failing on error - default on')
 @click.pass_obj
-def onlycopy(ctx, srcdir, checkdir,relpath):
+def onlycopy(ctx, srcdir, checkdir, relpath, failonerror):
     """
     onlycopy command prints list of all the files that aren't in the srcdir
     """
     if relpath:
         basepath = os.getcwd()
-        for i in onlycopy_yield(srcdir, checkdir):
+        for i in onlycopy_yield(srcdir, checkdir, failonerror):
             click.echo(os.path.relpath(i, basepath))
     else:
-        for i in onlycopy_yield(srcdir, checkdir):
+        for i in onlycopy_yield(srcdir, checkdir, failonerror):
             click.echo(i)
     
-def onlycopy_yield(srcdir, checkdir):
+def onlycopy_yield(srcdir, checkdir, failonerror=True):
     """
     onlycopy command prints list of all the files that aren't in the srcdir
     """
@@ -441,7 +447,7 @@ def onlycopy_yield(srcdir, checkdir):
     size_dict = create_size_dict(basefiles)
 
     for comparedir in checkdir:
-        only_files = get_only_copy(size_dict, comparedir)
+        only_files = get_only_copy(size_dict, comparedir, failonerror)
 
         LOGGER.debug("Length %s" % len(only_files))
         for thefile in only_files:
@@ -505,7 +511,7 @@ def get_duplicate_files(size_dict, topdir):
             ] 
     return files  
 
-def get_only_copy(size_dict, topdir):
+def get_only_copy(size_dict, topdir, failonerror=True):
     """
     if_match_return_true=True means find duplicates
     if_match_return_true=False means find if there is only one copy of it.
@@ -524,14 +530,16 @@ def get_only_copy(size_dict, topdir):
                         or is_match(os.path.getsize(os.path.join(dirpath,filename)), # size
                         os.path.abspath(os.path.join(dirpath,filename)), # file
                         size_dict[os.path.getsize(os.path.join(dirpath,filename))], # file_list
-                        if_match_return_true)) ] # if_match_return_value
+                        if_match_return_true, # if_match_return_value
+                        failonerror)) ] # failonerror
     return files 
   
 
-def is_match(size, file, file_list, if_match_return_value):
+def is_match(size, file, file_list, if_match_return_value, is_error_fatal=True):
     """
     if_match_return_value=True means find duplicates
     if_match_return_value=False means find not duplicates
+    is_error_fatal=True
     
     Algorithm:
     files being compared are the same size
@@ -545,27 +553,53 @@ def is_match(size, file, file_list, if_match_return_value):
     
     """
     if size < 4096:
-        return compare_whole_file(size, file, file_list, if_match_return_value)
+        try:
+            return compare_whole_file(size, file, file_list, if_match_return_value, is_error_fatal)
+        except IOError as myioerror:
+            if is_error_fatal:
+                raise myioerror
+            else:
+                eprint()
+            
     else:
         for file_to_compare in file_list:
-            if compare_first_4k(file, file_to_compare):
-                # TODO: Optimize by saving the md5 for each check if a list
-                if compare_md5(file, file_to_compare):
-                    return if_match_return_value
+            try:
+                if compare_first_4k(file, file_to_compare):
+                    # TODO: Optimize by saving the md5 for each check if a list
+                    if compare_md5(file, file_to_compare):
+                        return if_match_return_value
+            except IOError as myioerror:
+                if is_error_fatal:
+                    raise myioerror
+                else:
+                    eprint("{}:{}".format(file, file_to_compare))
         return not if_match_return_value
 
-def compare_whole_file(size, file, file_list, if_match_return_value):
+def compare_whole_file(size, file, file_list, if_match_return_value, is_error_fatal):
     file_bytes = b''
     file_to_compare_bytes = b''
-    with open(file,"rb") as f:
-        file_bytes = f.read(size)
-        if len(file_bytes) != size:
-            raise Exception("Did not read the expected file size")
-    for file_to_compare in file_list:
-        with open(file_to_compare,"rb") as f:
-            file_to_compare_bytes = f.read(size)
-            if len(file_to_compare_bytes) != size:
+    try:
+        with open(file,"rb") as f:
+            file_bytes = f.read(size)
+            if len(file_bytes) != size:
                 raise Exception("Did not read the expected file size")
+    except IOError as myioerror:
+        if is_error_fatal:
+            raise myioerror
+        else:
+            eprint("{}".format(file))
+    
+    for file_to_compare in file_list:
+        try:
+            with open(file_to_compare,"rb") as f:
+                file_to_compare_bytes = f.read(size)
+                if len(file_to_compare_bytes) != size:
+                    raise Exception("Did not read the expected file size")
+        except IOError as myioerror:
+            if is_error_fatal:
+                raise myioerror
+            else:
+                eprint("{}:{}".format(file, file_to_compare))
         if file_bytes == file_to_compare_bytes:
             return if_match_return_value
     return not if_match_return_value

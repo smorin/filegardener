@@ -191,14 +191,17 @@ onlycopy
 	> filegardener onlycopy --help
 
 ::
+
 	Usage: filegardener onlycopy [OPTIONS] CHECKDIR...
 
 	  onlycopy command prints list of all the files that aren't in the srcdir
 
 	Options:
-	  -s, --srcdir DIRECTORY        directories to check  [required]
-	  -r, --relpath / --no-relpath  turn on/off relative path - default off
-	  -?, -h, --help                Show this message and exit.
+	  -s, --srcdir DIRECTORY          directories to check  [required]
+	  -r, --relpath / --no-relpath    turn on/off relative path - default off
+	  -f, --failonerror / --no-failonerror
+	                                  turn on/off failing on error - default on
+	  -?, -h, --help                  Show this message and exit.
 
 rmdirs
 ------
