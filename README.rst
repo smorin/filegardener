@@ -46,6 +46,27 @@ Build
 
 	> make
 
+Use-Cases
+---------
+
+Checking for Duplicates
+
+Sometimes you want to get a list of all files that are duplicates in a second directory.
+
+::
+
+
+Checking for the only copy of files
+
+Sometimes you want to check if the only copy of a file lives on a second drive or directory.  This way you can make sure you don't delete the last copy of a file.
+
+Example:
+::
+
+	time filegardener onlycopy --srcdir ~/Pictures --srcdir ~/Music  /Volumes/MyUSBDrive/ | tee list_onlycopyfiles_in_dst_dir.txt
+
+
+
 Usage Summary
 -------------
 
