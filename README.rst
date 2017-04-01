@@ -65,6 +65,10 @@ Example:
 
 	time filegardener onlycopy --srcdir ~/Pictures --srcdir ~/Music  /Volumes/MyUSBDrive/ | tee list_onlycopyfiles_in_dst_dir.txt
 
+If you want not fail on error and capture the output on commandline and in files.
+::
+
+	time filegardener onlycopy --no-failonerror --srcdir ~/Pictures --srcdir ~/Music /Volumes/MyUSBDrive > >(tee stdout.log) 2> >(tee stderr.log >&2)
 
 
 Usage Summary
