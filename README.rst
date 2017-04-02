@@ -49,16 +49,18 @@ Build
 Use-Cases
 ---------
 
-Checking for Duplicates
+Checking for duplicate files
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Sometimes you want to get a list of all files that are duplicates in a second directory.
 
 ::
 
 
-Checking for the only copy of files
+Checking for the last or only copy of a file
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Sometimes you want to check if the only copy of a file lives on a second drive or directory.  This way you can make sure you don't delete the last copy of a file.
+Sometimes you want to check for the last or only copy of a file lives on a second drive or directory.  This way you can make sure you don't delete the last copy of a file.
 
 A common example would be if you have a bunch of USB Pen Drives and you want to wipe the drives clean but don't want to delete the last copy of a file.  You can use this to compare all the files on your computer with what's on your pen drive.
 
