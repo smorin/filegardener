@@ -60,12 +60,14 @@ Checking for the only copy of files
 
 Sometimes you want to check if the only copy of a file lives on a second drive or directory.  This way you can make sure you don't delete the last copy of a file.
 
+A common example would be if you have a bunch of USB Pen Drives and you want to wipe the drives clean but don't want to delete the last copy of a file.  You can use this to compare all the files on your computer with what's on your pen drive.
+
 Example:
 ::
 
 	time filegardener onlycopy --srcdir ~/Pictures --srcdir ~/Music  /Volumes/MyUSBDrive/ | tee list_onlycopyfiles_in_dst_dir.txt
 
-If you want not fail on error and capture the output on commandline and in files.
+If you want not fail on error and capture the list of file you only have 1 copy of and list of error in trying to check any file.  This command will save the list of file you only have one copy of in stdout.log and any errors in stderr.log
 ::
 
 	time filegardener onlycopy --no-failonerror --srcdir ~/Pictures --srcdir ~/Music /Volumes/MyUSBDrive > >(tee stdout.log) 2> >(tee stderr.log >&2)
