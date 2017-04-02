@@ -31,7 +31,7 @@ def eprint(*args, **kwargs):
     """ prints to stderr, using the 'from __future__ import print_function' """
     print(*args, file=sys.stderr, **kwargs)
 
-__version__ = '1.6.8' 
+__version__ = '1.6.9' 
 __author__ = 'Steve Morin'
 __script_name__ = 'filegardener'
 
@@ -594,7 +594,7 @@ def compare_whole_file(size, file, file_list, if_match_return_value, is_error_fa
             with open(file_to_compare,"rb") as f:
                 file_to_compare_bytes = f.read(size)
                 if len(file_to_compare_bytes) != size:
-                    raise Exception("Did not read the expected file size")
+                    raise IOError("Filegardener - compare_whole_file: Did not read the expected file size:{}".format(size))
         except IOError as myioerror:
             if is_error_fatal:
                 raise myioerror
@@ -613,11 +613,11 @@ def compare_first_4k(file, file_to_compare):
     with open(file,"rb") as f:
         file_bytes = f.read(4096)
         if len(file_bytes) != 4096:
-            raise Exception("Did not read the expected file size")
+            raise IOError("Filegardener - compare_first_4k: Did not read the expected file size:{}".format(4096))
     with open(file_to_compare,"rb") as f:
         file_to_compare_bytes = f.read(4096)
         if len(file_bytes) != 4096:
-            raise Exception("Did not read the expected file size")
+            raise IOError("Filegardener - compare_first_4k: Did not read the expected file size:{}".format(4096))
     if file_bytes == file_to_compare_bytes:
         return True
     else:
