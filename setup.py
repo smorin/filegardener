@@ -47,8 +47,11 @@ class PyTest(TestCommand):
 
     def run_tests(self):
         import pytest
-        
-        self.pytest_args = ['--ignore=filegardener-virtualenv', '--ignore=filegardener-venv', '--ignore=tasks', '--ignore=test_data'] + self.pytest_args
+
+        additional_arg = self.pytest_args
+
+        self.pytest_args = ['--ignore=filegardener-virtualenv', '--ignore=filegardener-venv', '--ignore=tasks', '--ignore=test_data']
+        self.pytest_args.append(additional_arg)
         
         errno = pytest.main(self.pytest_args)
         sys.exit(errno)

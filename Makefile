@@ -1,5 +1,5 @@
 test: ## Run the unit tests
-	python setup.py test	
+	python setup.py test --pytest-args='-v'
 	@echo ""
 	# This runs all of the tests. To run an individual test, run py.test with
 	# the -k flag, like "py.test -k test_path_is_not_double_encoded"

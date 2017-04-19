@@ -12,6 +12,7 @@ import sys
 import getopt
 import hashlib
 import io
+import re
 
 # Setup Logging
 
@@ -31,7 +32,7 @@ def eprint(*args, **kwargs):
     """ prints to stderr, using the 'from __future__ import print_function' """
     print(*args, file=sys.stderr, **kwargs)
 
-__version__ = '1.6.9' 
+__version__ = '1.7.0'
 __author__ = 'Steve Morin'
 __script_name__ = 'filegardener'
 
@@ -413,25 +414,86 @@ def dedup_yield(srcdir, checkdir):
         for thefile in dup_files:
             yield thefile
 
+# TODO: add file size distribution function
+
+
 @cli.command(context_settings=CONTEXT_SETTINGS)
-@click.option('--srcdir', '-s', multiple=True, required=True, help='directories to check',  type=click.Path(exists=True, file_okay=False, dir_okay=True, readable=True, resolve_path=True))
-@click.argument('checkdir', nargs=-1, required=True, type=click.Path(exists=True, file_okay=False, dir_okay=True, readable=True, resolve_path=True))
+@click.pass_obj
+def hello(ctx):
+    print('world')
+
+
+@cli.command(context_settings=CONTEXT_SETTINGS)
+@click.pass_obj
+def test(ctx):
+    innerdir = get_files_and_size_from_dir('/Users/user', regex=None)
+
+    with open('/Users/user/test_fg', 'w') as f:
+        for tup in innerdir:
+            f.write("{}:{}\n".format(tup[1], tup[0]))
+
+    second_innerdir = create_tuple_list('/Users/user/test_fg')
+
+
+def create_tuple_list(file_name):
+    tup_list = []
+    with open('/Users/user/test_fg', 'r') as f:
+        for line in f:
+            line = line.strip()
+            list_result = line.split(":", 2)
+            list_result.reverse()
+            tup_list.append(tuple(list_result))
+    return tup_list
+
+
+@cli.command(context_settings=CONTEXT_SETTINGS)
+@click.option('--srcdir', '-s', multiple=True, required=True, help='directories to check',
+              type=click.Path(exists=True, file_okay=False, dir_okay=True, readable=True, resolve_path=True))
+@click.argument('checkdir', nargs=-1, required=True,
+                type=click.Path(exists=True, file_okay=False, dir_okay=True, readable=True, resolve_path=True))
 @click.option('--relpath/--no-relpath', '-r', default=False, help='turn on/off relative path - default off')
 @click.option('--failonerror/--no-failonerror', '-f', default=True, help='turn on/off failing on error - default on')
+@click.option('--include-regex', default=None, type=click.STRING,
+              help='use this regex on src and dest files to test if they should be included if they match') # add callback for validation
+@click.option('--include-src-regex', default=None, type=click.STRING,
+              help='use this regex on src files to test if they should be included if they match') # add callback for validation
+@click.option('--include-dst-regex', default=None, type=click.STRING,
+              help='use this regex on dst files to test if they should be included if they match') # add callback for validation
 @click.pass_obj
-def onlycopy(ctx, srcdir, checkdir, relpath, failonerror):
+def onlycopy(ctx, srcdir, checkdir, relpath, failonerror, include_regex, include_src_regex, include_dst_regex):
     """
     onlycopy command prints list of all the files that aren't in the srcdir
     """
+
+    # validate the regex options
+    check_regex(include_regex)
+    if include_regex is not None:
+        include_src_regex = include_regex
+        include_dst_regex = include_regex
+    check_regex(include_src_regex)
+    check_regex(include_dst_regex)
+
     if relpath:
         basepath = os.getcwd()
-        for i in onlycopy_yield(srcdir, checkdir, failonerror):
+        for i in onlycopy_yield(srcdir, checkdir, failonerror, src_regex=include_src_regex, dst_regex=include_dst_regex):
             click.echo(os.path.relpath(i, basepath))
     else:
-        for i in onlycopy_yield(srcdir, checkdir, failonerror):
+        for i in onlycopy_yield(srcdir, checkdir, failonerror, src_regex=include_src_regex, dst_regex=include_dst_regex):
             click.echo(i)
-    
-def onlycopy_yield(srcdir, checkdir, failonerror=True):
+
+
+def check_regex(regexstring):
+    """ method to check that the regex works"""
+    if regexstring is not None:
+        try:
+            compiledregex = re.compile(regexstring, flags=re.IGNORECASE)
+            # result = compiledregex.match(string)
+        except:
+            raise click.BadOptionUsage("The regex didn't compile. For correct usage"
+                                       " see:  https://docs.python.org/2/library/re.html")
+
+
+def onlycopy_yield(srcdir, checkdir, failonerror=True, src_regex=None, dst_regex=None):
     """
     onlycopy command prints list of all the files that aren't in the srcdir
     """
@@ -441,17 +503,18 @@ def onlycopy_yield(srcdir, checkdir, failonerror=True):
 
     basefiles = []
     for mydir in srcdir:
-        innerdir = get_files_and_size_from_dir(mydir)
+        innerdir = get_files_and_size_from_dir(mydir, regex=src_regex)
         basefiles.extend(innerdir)
 
     size_dict = create_size_dict(basefiles)
 
     for comparedir in checkdir:
-        only_files = get_only_copy(size_dict, comparedir, failonerror)
+        only_files = get_only_copy(size_dict, comparedir, failonerror, regex=dst_regex)
 
         LOGGER.debug("Length %s" % len(only_files))
         for thefile in only_files:
             yield thefile
+
 
 def check_dir_no_overlap(srcdir, checkdir):
     for x in checkdir:
@@ -463,12 +526,30 @@ def check_dir_no_overlap(srcdir, checkdir):
                 click.echo("source and checkdir are a subdirectory of one or the other source(%s), checkdir(%s)" % (x, y) )
                 sys.exit(1)    
 
-def get_files_and_size_from_dir(topdir):
+
+def get_files_and_size_from_dir(topdir, regex=None):
     """ Finds all the files under a specific directory. Returns a list of the absolute path for
     all of these files."""
+    if regex is not None:
+        compiled_regex = re.compile(regex, flags=re.IGNORECASE)
+
+        def is_re_match(file_path):
+            if compiled_regex.match(file_path):
+                return True
+            else:
+                return False
+    else:
+
+        def is_re_match(file_path):
+            return True
+
     if not os.path.isdir(topdir):
         raise Exception("You submitted a director that isn't one'")
-    files = [ (os.path.abspath(os.path.join(dirpath,filename)),os.path.getsize(os.path.join(dirpath,filename))) for dirpath, dirnames, files in os.walk(topdir) for filename in files if not os.path.islink(os.path.join(dirpath,filename))]
+    files = [(os.path.abspath(os.path.join(dirpath, filename)), os.path.getsize(os.path.join(dirpath, filename)))
+             for dirpath, dirnames, files in os.walk(topdir)
+             for filename in files if not os.path.islink(os.path.join(dirpath, filename))
+             and is_re_match(os.path.abspath(os.path.join(dirpath, filename)))
+             ]
     return files
     
 def create_size_dict(files_size):
@@ -489,6 +570,7 @@ def create_size_dict(files_size):
 # ('./test_dedup/1dup/seconddir/tests', ['testserver'], ['__init__.py', 'compat.py', 'conftest.py', 'test_hooks.py', 'test_lowlevel.py', 'test_requests.py', 'test_structures.py', 'test_testserver.py', 'test_utils.py', 'utils.py'])
 # ('./test_dedup/1dup/seconddir/tests/testserver', [], ['__init__.py', 'server.py'])
 # ('./test_dedup/identialdirs', ['firstdir', 'seconddir'], [])
+
 
 def get_duplicate_files(size_dict, topdir):
     """
@@ -511,27 +593,46 @@ def get_duplicate_files(size_dict, topdir):
             ] 
     return files  
 
-def get_only_copy(size_dict, topdir, failonerror=True):
+
+def get_only_copy(size_dict, topdir, failonerror=True, regex=None):
     """
     if_match_return_true=True means find duplicates
     if_match_return_true=False means find if there is only one copy of it.
     """
     
     files = []
+
+    if regex is not None:
+        compiled_regex = re.compile(regex, flags=re.IGNORECASE)
+
+        def is_re_match(file_path):
+            if compiled_regex.match(file_path):
+                return True
+            else:
+                return False
+    else:
+
+        def is_re_match(file_path):
+            return True
     
     if_match_return_true = False
     
     # The logic is for all the directories and for each file in each directory
     # test the following if is_not_symlink and (not in size or is_not_match )
-    files = [ os.path.abspath(os.path.join(dirpath,filename)) # return absolute path of file that matches criteria
-                for dirpath, dirnames, files in os.walk(topdir) 
-                    for filename in files 
-                        if not os.path.islink(os.path.join(dirpath,filename)) and (os.path.getsize(os.path.join(dirpath,filename)) not in size_dict 
-                        or is_match(os.path.getsize(os.path.join(dirpath,filename)), # size
-                        os.path.abspath(os.path.join(dirpath,filename)), # file
-                        size_dict[os.path.getsize(os.path.join(dirpath,filename))], # file_list
-                        if_match_return_true, # if_match_return_value
-                        failonerror)) ] # failonerror
+    files = [os.path.abspath(os.path.join(dirpath, filename))  # return absolute path of file that matches criteria
+             for dirpath, dirnames, files in os.walk(topdir)
+             for filename in files
+             # TODO: possibly pull os.path functions into a delegate to add try except block to be fault tolerant
+             if not os.path.islink(os.path.join(dirpath, filename))
+             and is_re_match(os.path.abspath(os.path.join(dirpath, filename)))
+             and (os.path.getsize(os.path.join(dirpath, filename))
+                  not in size_dict
+                  or is_match(os.path.getsize(os.path.join(dirpath, filename)),  # size
+                              os.path.abspath(os.path.join(dirpath, filename)),  # file
+                              size_dict[os.path.getsize(os.path.join(dirpath, filename))],  # file_list
+                              if_match_return_true,  # if_match_return_value
+                              failonerror)
+                  )]  # failonerror
     return files 
   
 
