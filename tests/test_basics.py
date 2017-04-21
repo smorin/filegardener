@@ -684,6 +684,25 @@ def check_output_against_validation_file(output, test_dir=None, validation_file=
         else:
             generator = output
 
+        is_unicode_class = True
+        try:
+            unicode
+        except:
+            is_unicode_class = False
+
+        convert_string = None
+
+        if is_unicode_class:
+            def convert_string_fn(my_string):
+                return my_string.decode()
+
+            convert_string = convert_string_fn
+        else:
+            def convert_string_fn(my_string):
+                return my_string
+
+            convert_string = convert_string_fn
+
         # open validation file
         # read every line stripping newline and turning file path into absolute path is necessary
         # store each line/filename as the key and value in a dictionary to be used for comparison
@@ -696,7 +715,7 @@ def check_output_against_validation_file(output, test_dir=None, validation_file=
                     file_name = abs_path_fn(file_name)
                 # needs to be put here because abs_path_fn functions convert back to str
                 if isinstance(file_name, str):
-                    file_name = file_name.decode()
+                    file_name = convert_string(file_name)
                 result_lookup[file_name] = file_name
             for line in generator:
                 # used so that the return value of the generator can be extracted
@@ -713,9 +732,30 @@ def check_output_against_validation_file(output, test_dir=None, validation_file=
         # is output is None okay
         # if a string empty is okay
         # otherwise assume it's a generator and should return no results
+
+        # This unicode workaround for python 2 and 3 compatibility
+        is_unicode_class = True
+        try:
+            unicode
+        except:
+            is_unicode_class = False
+
+        is_string = None
+
+        if is_unicode_class:
+            def is_string_fn(my_string):
+                return isinstance(my_string, str) or isinstance(output, unicode)
+
+            is_string = is_string_fn
+        else:
+            def is_string_fn(my_string):
+                return isinstance(my_string, str)
+
+            is_string = is_string_fn
+
         if output is None:
             assert True
-        elif (isinstance(output, str) or isinstance(output, unicode)) and output == '':
+        elif is_string(output) and output == '':
             assert True
         else:
             with pytest.raises(StopIteration):
