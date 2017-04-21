@@ -1,0 +1,8 @@
+25503:test_data/1dup/firstdir/liten.py
+14950:test_data/1dup/firstdir/liten.pyc
+4044:test_data/1dup/firstdir/test_liten.py
+5285:test_data/1dup/firstdir/test_liten.pyc
+25503:test_data/1dup/firstdir/liten-0.1.5-py2.5/liten.py
+14950:test_data/1dup/firstdir/liten-0.1.5-py2.5/liten.pyc
+4044:test_data/1dup/firstdir/liten-0.1.5-py2.5/test_liten.py
+5285:test_data/1dup/firstdir/liten-0.1.5-py2.5/test_liten.pyc

@@ -233,6 +233,102 @@ class TestBasics(object):
         assert result_string == result.output
         assert result.exit_code == 0
 
+    def test_srcfile_cli_abs_path(self):
+        """
+        test srcfile command to make sure it can return the abs path
+        Command: filegardener srcfile -s test_data/7notemptydirs/main -s test_data/7notemptydirs/other 
+        """
+        # 1) get output
+        #       a) append from yield
+        #       b) get whole output
+        # 2) get verification file
+        #       a) if relative do nothing
+        #       b) if abs update to be abs
+        # 3) compare output to verification
+
+        # get output
+        runner = CliRunner()
+        test_dir = '7notemptydirs'
+
+        base_tmpdir_src_filebase1 = os.path.abspath(os.path.join(os.getcwd(), 'test_data', test_dir, 'main'))
+        base_tmpdir_src_filebase2 = os.path.abspath(os.path.join(os.getcwd(), 'test_data', test_dir, 'other'))
+        cli_cmd = ['srcfile', '--srcdir=' + base_tmpdir_src_filebase1, '--srcdir=' + base_tmpdir_src_filebase2]
+        result = runner.invoke(filegardener.cli, cli_cmd)
+        # result.output
+        # result.exit_code
+
+        # get verification file
+        # def check_output_against_validation_file(output, test_dir=None, validation_file=None,
+        #                                 validation_absolute=True, result=True):
+        check_output_against_validation_file(result.output, test_dir=test_dir, validation_file='test_srcfile_cli_abs_path.txt', abs_path_fn=srcfile_make_abs)
+
+    def test_srcfile_cli_rel_path(self):
+        """
+        filegardener srcfile -r -s test_data/1dup/firstdir
+        """
+        runner = CliRunner()
+        test_dir = '1dup'
+
+        base_tmpdir_src_filebase1 = os.path.abspath(os.path.join(os.getcwd(), 'test_data', test_dir, 'firstdir'))
+        cli_cmd = ['srcfile', '--srcdir=' + base_tmpdir_src_filebase1, '-r']
+        result = runner.invoke(filegardener.cli, cli_cmd)
+        check_output_against_validation_file(result.output, test_dir=test_dir,
+                                             validation_file='test_srcfile_cli_rel_path.txt',
+                                             abs_path_fn=srcfile_make_abs,
+                                             validation_absolute=False)
+
+    def test_srcfile_cli_include_regex(self):
+        """
+        filegardener srcfile -r -s test_data/1dup/firstdir --include-regex '.*\.py'
+        """
+        runner = CliRunner()
+        test_dir = '1dup'
+
+        base_tmpdir_src_filebase1 = os.path.abspath(os.path.join(os.getcwd(), 'test_data', test_dir, 'firstdir'))
+        cli_cmd = ['srcfile', '--srcdir=' + base_tmpdir_src_filebase1, '-r', '--include-regex', '.*\.py']
+        result = runner.invoke(filegardener.cli, cli_cmd)
+        check_output_against_validation_file(result.output, test_dir=test_dir,
+                                             validation_file='test_srcfile_cli_include_regex.txt',
+                                             abs_path_fn=srcfile_make_abs,
+                                             validation_absolute=False)
+
+    def test_srcfile_abs_path(self):
+        """
+        filegardener srcfile -s test_data/1dup/firstdir
+        """
+        test_dir = '1dup'
+
+        base_tmpdir_src_filebase1 = os.path.abspath(os.path.join(os.getcwd(), 'test_data', test_dir, 'firstdir'))
+        generator = filegardener.srcfile_yield([base_tmpdir_src_filebase1], failonerror=True, src_regex=None)
+        check_output_against_validation_file(generator, test_dir=test_dir,
+                                             validation_file='test_srcfile_abs_path.txt',
+                                             abs_path_fn=srcfile_make_abs,
+                                             validation_absolute=True, get_keyvalue_fn=srcfile_create_keyvalue)
+
+
+    def test_srcfile_include_regex(self):
+        """
+        filegardener srcfile -r -s test_data/1dup/firstdir
+        """
+        test_dir = '1dup'
+
+        base_tmpdir_src_filebase1 = os.path.abspath(os.path.join(os.getcwd(), 'test_data', test_dir, 'firstdir'))
+        generator = filegardener.srcfile_yield([base_tmpdir_src_filebase1], failonerror=True, src_regex='.*\.py')
+        check_output_against_validation_file(generator, test_dir=test_dir,
+                                             validation_file='test_srcfile_include_regex.txt',
+                                             abs_path_fn=srcfile_make_abs,
+                                             validation_absolute=True, get_keyvalue_fn=srcfile_create_keyvalue)
+
+    def test_srcfile_cli_bad_regex(self):
+        """ This test validates that the srcfile command will fail when given a bad regex argument 
+            Command: filegardener srcfile --srcfile=test_data/1dup/ --include-regex='[].*\.txt$' """
+        runner = CliRunner()
+        test_dir = '1dup'
+        base_tmpdir_src_filebase = os.path.abspath(os.path.join(os.getcwd(), 'test_data', test_dir))
+        result = runner.invoke(filegardener.cli, ['srcfile', '--srcdir=' + base_tmpdir_src_filebase, '--include-regex=\'[].*\.txt$\'' ])
+
+        assert result.exit_code == 2
+
     def test_runner_with_hello_world(self):
         """ test onlycopy regex so that it proves the overrides work for
          include-regex to prevent include-src-regex include-dst-regex"""
@@ -507,7 +603,7 @@ class TestBasics(object):
 
 
 def dup_tester(test_dir, reverse=False, noresults=False):
-    """ you give this method a path name and it looks uner test_data/ for that directory to test.  
+    """ you give this method a path name and it looks under test_data/ for that directory to test.  
     This test assumes that the order the duplicates will be found will be the same"""
     test_basedir = os.path.abspath(os.path.join(os.getcwd(), 'test_data', test_dir))
     validation_file_name = ''
@@ -530,15 +626,100 @@ def dup_tester(test_dir, reverse=False, noresults=False):
             next(generator)
     else:
         with open(test_validation_file) as f:
-            i = 0
             result_lookup = {}
             for line in f:
-                file_name = line.rstrip() # remove new lines from each line
+                file_name = line.rstrip()  # remove new lines from each line
                 file_name = os.path.abspath(os.path.join(os.getcwd(), file_name))
                 result_lookup[file_name] = file_name
             for line in generator:
                 assert result_lookup[line] == line
+                del result_lookup[line]
+            assert len(result_lookup.keys()) == 0
 
+
+def path_make_abs(path):
+    return os.path.abspath(os.path.join(os.getcwd(), path))
+
+
+def srcfile_make_abs(size_path):
+    size, path = size_path.split(':', 2)
+    return "{}:{}".format(size,os.path.abspath(os.path.join(os.getcwd(), path)))
+
+
+def srcfile_create_keyvalue(file_size_tuple):
+    return "{}:{}".format(file_size_tuple[1], file_size_tuple[0])
+
+
+def check_output_against_validation_file(output, test_dir=None, validation_file=None,
+                                         validation_absolute=True, result=True, abs_path_fn=path_make_abs, get_keyvalue_fn=None):
+    """ srcfile test you give this method a output to verify and test_data/ for that directory to test.  
+    This test assumes that the order the duplicates will be found will be the same
+    output is expected to be a string or assumed to be a generator
+    test_dir should be a dir in test_data of the project main
+    validation_file should be a file in test_dir or a absolute path to a file
+    validation_absolute boolean tells if a validation file should be converted to absolute paths for
+        comparison to the output results. (default True)
+    result if the function should expect results.
+    """
+    test_basedir = os.path.abspath(os.path.join(os.getcwd(), 'test_data', test_dir))
+    test_validation_file = ''
+
+    assert output is not None
+    assert validation_file is not None
+
+    if os.path.isfile(validation_file):
+        test_validation_file = validation_file
+    else:
+        test_validation_file = os.path.join(test_basedir, validation_file)
+
+    # check that the validation file points to a real file
+    assert os.path.isfile(test_validation_file)
+
+    if result:
+        generator = None
+
+        # turn your string output into generator
+        if isinstance(output, str) or isinstance(output, unicode):
+            generator = iter(output.splitlines())
+        else:
+            generator = output
+
+        # open validation file
+        # read every line stripping newline and turning file path into absolute path is necessary
+        # store each line/filename as the key and value in a dictionary to be used for comparison
+        # against the results
+        with open(test_validation_file) as f:
+            result_lookup = {}
+            for line in f:
+                file_name = line.rstrip()  # remove new lines from each line
+                if validation_absolute:
+                    file_name = abs_path_fn(file_name)
+                # needs to be put here because abs_path_fn functions convert back to str
+                if isinstance(file_name, str):
+                    file_name = file_name.decode()
+                result_lookup[file_name] = file_name
+            for line in generator:
+                # used so that the return value of the generator can be extracted
+                # in a custom fashion
+                if get_keyvalue_fn is not None:
+                    line = get_keyvalue_fn(line)
+                if isinstance(line, str):
+                    line = line.decode()
+                assert result_lookup[line] == line
+                del result_lookup[line]
+            assert len(result_lookup.keys()) == 0
+    else:
+        # you expect no result so your testing if that's true
+        # is output is None okay
+        # if a string empty is okay
+        # otherwise assume it's a generator and should return no results
+        if output is None:
+            assert True
+        elif (isinstance(output, str) or isinstance(output, unicode)) and output == '':
+            assert True
+        else:
+            with pytest.raises(StopIteration):
+                next(generator)
 
 def onlycopy_tester(test_dir, reverse=False, noresults=False, validation_file=None, arg_src_regex=None,
                     arg_dst_regex=None):
@@ -568,7 +749,6 @@ def onlycopy_tester(test_dir, reverse=False, noresults=False, validation_file=No
             next(generator)
     else:
         with open(test_validation_file) as f:
-            i = 0
             result_lookup = {}
             for line in f:
                 file_name = line.rstrip()  # remove new lines from each line
@@ -595,7 +775,6 @@ def emptydirs_tester(test_dir, noresults=False):
             next(generator)
     else:
         with open(test_validation_file) as f:
-            i = 0
             result_lookup = {}
             for line in f:
                 file_name = line.rstrip() # remove new lines from each line
@@ -603,4 +782,6 @@ def emptydirs_tester(test_dir, noresults=False):
                 result_lookup[file_name] = file_name
             for line in generator:
                 assert result_lookup[line] == line
+                del result_lookup[line]
+            assert len(result_lookup.keys()) == 0
 

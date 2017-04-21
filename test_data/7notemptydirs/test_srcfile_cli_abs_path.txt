@@ -1,0 +1,2 @@
+0:test_data/7notemptydirs/main/subdir2/subsubdir1/afile
+0:test_data/7notemptydirs/other/subdir1/subsubdir2/subsubsubdir1/bfile

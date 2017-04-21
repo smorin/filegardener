@@ -32,7 +32,7 @@ def eprint(*args, **kwargs):
     """ prints to stderr, using the 'from __future__ import print_function' """
     print(*args, file=sys.stderr, **kwargs)
 
-__version__ = '1.7.0'
+__version__ = '1.7.1'
 __author__ = 'Steve Morin'
 __script_name__ = 'filegardener'
 
@@ -445,6 +445,63 @@ def create_tuple_list(file_name):
             tup_list.append(tuple(list_result))
     return tup_list
 
+
+@cli.command(context_settings=CONTEXT_SETTINGS)
+@click.option('--srcdir', '-s', multiple=True, required=True, help='directories to check',
+              type=click.Path(exists=True, file_okay=False, dir_okay=True, readable=True, resolve_path=True))
+@click.option('--relpath/--no-relpath', '-r', default=False, help='turn on/off relative path - default off')
+@click.option('--failonerror/--no-failonerror', '-f', default=True, help='turn on/off failing on error - default on')
+@click.option('--include-regex', default=None, type=click.STRING,
+              help='use this regex on src and dest files to test if they should be included if they match') # add callback for validation
+@click.option('--include-src-regex', default=None, type=click.STRING,
+              help='use this regex on src files to test if they should be included if they match') # add callback for validation
+@click.option('--include-dst-regex', default=None, type=click.STRING,
+              help='use this regex on dst files to test if they should be included if they match') # add callback for validation
+@click.pass_obj
+def srcfile(ctx, srcdir, relpath, failonerror, include_regex, include_src_regex, include_dst_regex):
+    """
+    srcfile prints list of all the file size and paths.  You can use this to speed up processing, if your
+    using the same src file sets multiple times.  Instead feed the file you can create from this, but sometimes
+    100 times faster.
+    
+    format:
+        size1:file_path1
+        size2:file_path2
+    """
+    # TODO: Test and write unit tests
+
+    # validate the regex options
+    check_regex(include_regex)
+    if include_regex is not None:
+        include_src_regex = include_regex
+        include_dst_regex = include_regex
+    check_regex(include_src_regex)
+    check_regex(include_dst_regex)
+
+    if relpath:
+        basepath = os.getcwd()
+        for i in srcfile_yield(srcdir, failonerror, src_regex=include_src_regex, dst_regex=include_dst_regex):
+            click.echo("{}:{}".format(i[1], os.path.relpath(i[0], basepath)))
+    else:
+        for i in srcfile_yield(srcdir, failonerror, src_regex=include_src_regex, dst_regex=include_dst_regex):
+            click.echo("{}:{}".format(i[1], i[0]))
+
+
+def srcfile_yield(srcdir, failonerror=True, src_regex=None, dst_regex=None):
+    """
+    sizepath will return a tuple at a time (path, size)
+    """
+    # TODO: Test and write unit tests
+
+    # http://stackoverflow.com/questions/19699127/efficient-array-concatenation
+
+    basefiles = []
+    for mydir in srcdir:
+        innerdir = get_files_and_size_from_dir(mydir, regex=src_regex)
+        basefiles.extend(innerdir)
+
+    for tup in basefiles:
+        yield tup
 
 @cli.command(context_settings=CONTEXT_SETTINGS)
 @click.option('--srcdir', '-s', multiple=True, required=True, help='directories to check',
