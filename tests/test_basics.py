@@ -675,20 +675,33 @@ def check_output_against_validation_file(output, test_dir=None, validation_file=
     # check that the validation file points to a real file
     assert os.path.isfile(test_validation_file)
 
+    is_unicode_class = True
+    try:
+        unicode
+    except:
+        is_unicode_class = False
+
+    is_string = None
+
+    if is_unicode_class:
+        def is_string_fn(my_string):
+            return isinstance(my_string, str) or isinstance(output, unicode)
+
+        is_string = is_string_fn
+    else:
+        def is_string_fn(my_string):
+            return isinstance(my_string, str)
+
+        is_string = is_string_fn
+
     if result:
         generator = None
 
         # turn your string output into generator
-        if isinstance(output, str) or isinstance(output, unicode):
+        if is_string(output):
             generator = iter(output.splitlines())
         else:
             generator = output
-
-        is_unicode_class = True
-        try:
-            unicode
-        except:
-            is_unicode_class = False
 
         convert_string = None
 
@@ -734,24 +747,6 @@ def check_output_against_validation_file(output, test_dir=None, validation_file=
         # otherwise assume it's a generator and should return no results
 
         # This unicode workaround for python 2 and 3 compatibility
-        is_unicode_class = True
-        try:
-            unicode
-        except:
-            is_unicode_class = False
-
-        is_string = None
-
-        if is_unicode_class:
-            def is_string_fn(my_string):
-                return isinstance(my_string, str) or isinstance(output, unicode)
-
-            is_string = is_string_fn
-        else:
-            def is_string_fn(my_string):
-                return isinstance(my_string, str)
-
-            is_string = is_string_fn
 
         if output is None:
             assert True
