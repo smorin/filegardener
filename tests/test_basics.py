@@ -723,7 +723,7 @@ def check_output_against_validation_file(output, test_dir=None, validation_file=
                 if get_keyvalue_fn is not None:
                     line = get_keyvalue_fn(line)
                 if isinstance(line, str):
-                    line = line.decode()
+                    line = convert_string(line)
                 assert result_lookup[line] == line
                 del result_lookup[line]
             assert len(result_lookup.keys()) == 0
