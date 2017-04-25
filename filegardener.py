@@ -641,7 +641,7 @@ def create_is_string_fn():
 
     if is_unicode_class:
         def is_string_fn(my_string):
-            return isinstance(my_string, str) or isinstance(output, unicode)
+            return isinstance(my_string, str) # or isinstance(my_string, unicode)
 
         is_string = is_string_fn
     else:
@@ -698,14 +698,24 @@ def get_files_and_size_from_file(sizepathfile, regex=None):
         raise Exception("You submitted a file that isn't one'")
 
     tuple_list = []
-    with open(sizepathfile) as f:
+    i = 0
+    import codecs
+    with codecs.open(sizepathfile, encoding='utf-8', errors='strict') as f:
         for line in f:
+            i = i + 1
             line_string = line.rstrip()  # remove new lines from each line
             size, path = line_string.split(':', 1)
             path = os.path.abspath(os.path.join(os.getcwd(), path))
             # needs to be put here because abs_path_fn functions convert back to str
             if is_string(path):
-                path = convert_to_unicode(path)
+                try:
+                    path = convert_to_unicode(path)
+                except UnicodeDecodeError as e:
+                    eprint("UnicodeDecodeError Line:{}, File:{}".format(i, sizepathfile))
+                    raise e
+                except UnicodeEncodeError as e:
+                    eprint("UnicodeEncodeError Line:{}, File:{}".format(i, sizepathfile))
+                    raise e
             # make sure it passes regex if any
             if is_re_match(path):
                 tuple_list.append((path, int(size)))
