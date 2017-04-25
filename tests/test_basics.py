@@ -127,25 +127,158 @@ class TestBasics(object):
     def test_dedup_none(self, testdir):
         dup_tester(testdir, noresults=True)
 
-    @pytest.mark.parametrize('testdir',['1dup', 'nodups'])
+    @pytest.mark.parametrize('testdir', ['1dup', 'nodups'])
     def test_only(self, testdir):
         onlycopy_tester(testdir)
-    
-    @pytest.mark.parametrize('testdir',['3dupsof6', '1dup', 'nodups'])
-    def test_only_reverse(self, testdir):
+
+    def test_create_file(self, tmpdir):
+        # example using temp dirs https://docs.pytest.org/en/latest/tmpdir.html
+        # http://py.readthedocs.io/en/latest/path.html
+        p = tmpdir.mkdir("sub").join("hello.txt")
+        p.write("content")
+        assert p.read() == "content"
+        assert len(tmpdir.listdir()) == 1
+        # p is the file path
+
+    @pytest.mark.parametrize('testdir', ['1dup', 'nodups'])
+    def test_onlycopy_v2(self, testdir):
+        checkdir, srcdir, validation_file_path = onlycopy_prep_fn(testdir)
+        generator = filegardener.onlycopy_yield(srcdir, checkdir, src_regex=None, dst_regex=None)
+        check_output_against_validation_file(generator, test_dir=testdir,
+                                             validation_file=validation_file_path,
+                                             validation_absolute=True)
+
+    def test_create_uniquepath(self, tmpdir):
+        p = tmpdir.mkdir("srcfile_output").join("{}{}".format("test_create_uniquepath", "other"))
+        p.write("hello")
+        assert os.path.isfile(str(p))
+
+    @pytest.mark.parametrize('testdir', ['1dup', 'nodups'])
+    def test_onlycopy_srcfile(self, testdir, tmpdir):
+        """ same test as test_onlycopy_v2 except uses srcfile  
+            filegardener srcfile --srcdir test_data/1dup/firstdir > /tmp/test_onlycopy_srcfile
+            filegardener onlycopy --srcfile /tmp/test_onlycopy_srcfile test_data/1dup/seconddir
+        """
+        method_name = "test_onlycopy_srcfile"
+        checkdir, srcdir, validation_file_path = onlycopy_prep_fn(testdir)
+        result = CliRunner().invoke(filegardener.cli,
+                           ['srcfile', '--srcdir', srcdir[0]])
+        assert result.exit_code == 0
+        p = tmpdir.mkdir("srcfile_output").join("{}{}".format(method_name, testdir))
+        p.write(result.output)
+        generator = filegardener.onlycopy_yield(None, checkdir, src_regex=None, dst_regex=None, srcfile=[str(p)])
+        check_output_against_validation_file(generator, test_dir=testdir,
+                                             validation_file=validation_file_path,
+                                             validation_absolute=True)
+
+    @pytest.mark.parametrize('testdir', ['3dupsof6', '1dup', 'nodups'])
+    def test_onlycopy_reverse(self, testdir):
+        # TODO: eventually remove, onlycopy_tester refactored to longer version below check below has more flexibility
         onlycopy_tester(testdir, reverse=True)
-    
-    @pytest.mark.parametrize('testdir',['emptydirs'])
-    def test_only_none(self, testdir):
+
+        checkdir, srcdir, validation_file_path = onlycopy_prep_fn(testdir, reverse=True)
+        generator = filegardener.onlycopy_yield(srcdir, checkdir, src_regex=None, dst_regex=None)
+        check_output_against_validation_file(generator, test_dir=testdir,
+                                             validation_file=validation_file_path,
+                                             validation_absolute=True,
+                                             result=True)
+
+    @pytest.mark.parametrize('testdir', ['3dupsof6', '1dup', 'nodups'])
+    def test_onlycopy_srcfile_reverse(self, testdir, tmpdir):
+        """ test_onlycopy_srcfile_reverse same as test_onlycopy_reverse except uses a srcfile instead of srcdir"""
+        method_name = "test_onlycopy_srcfile_reverse"
+        checkdir, srcdir, validation_file_path = onlycopy_prep_fn(testdir, reverse=True)
+        result = CliRunner().invoke(filegardener.cli,
+                                    ['srcfile', '--srcdir', srcdir[0]])
+        assert result.exit_code == 0
+        p = tmpdir.mkdir("srcfile_output").join("{}{}".format(method_name, testdir))
+        p.write(result.output)
+        generator = filegardener.onlycopy_yield(None, checkdir, src_regex=None, dst_regex=None, srcfile=[str(p)])
+        check_output_against_validation_file(generator, test_dir=testdir,
+                                             validation_file=validation_file_path,
+                                             validation_absolute=True,
+                                             result=True)
+
+    @pytest.mark.parametrize('testdir', ['emptydirs'])
+    def test_onlycopy_none_part1(self, testdir):
+        # TODO: eventually remove, onlycopy_tester refactored to longer version below check below has more flexibility
         onlycopy_tester(testdir, noresults=True)
+        checkdir, srcdir, validation_file_path = onlycopy_prep_fn(testdir, reverse=False)
+        generator = filegardener.onlycopy_yield(srcdir, checkdir, src_regex=None, dst_regex=None)
+        check_output_against_validation_file(generator, test_dir=testdir,
+                                             validation_file=validation_file_path,
+                                             validation_absolute=True,
+                                             result=False)
 
-    @pytest.mark.parametrize('testdir',['emptydirs', 'identicaldirs'])
-    def test_only_none(self, testdir):
+    @pytest.mark.parametrize('testdir', ['emptydirs'])
+    def test_onlycopy_srcfile_none_part1(self, testdir, tmpdir):
+        """ test_onlycopy_srcfile_none_part1 same as test_onlycopy_none_part1 except uses a srcfile instead of srcdir"""
+        method_name = "test_onlycopy_srcfile_none_part1"
+        checkdir, srcdir, validation_file_path = onlycopy_prep_fn(testdir, reverse=False)
+        result = CliRunner().invoke(filegardener.cli,
+                                    ['srcfile', '--srcdir', srcdir[0]])
+        assert result.exit_code == 0
+        p = tmpdir.mkdir("srcfile_output").join("{}{}".format(method_name, testdir))
+        p.write(result.output)
+        generator = filegardener.onlycopy_yield(None, checkdir, src_regex=None, dst_regex=None, srcfile=[str(p)])
+        check_output_against_validation_file(generator, test_dir=testdir,
+                                             validation_file=validation_file_path,
+                                             validation_absolute=True,
+                                             result=False)
+
+    @pytest.mark.parametrize('testdir', ['emptydirs', 'identicaldirs'])
+    def test_onlycopy_none_part2(self, testdir):
+        # TODO: eventually remove, onlycopy_tester refactored to longer version below check below has more flexibility
         onlycopy_tester(testdir, noresults=True, reverse=True)
+        checkdir, srcdir, validation_file_path = onlycopy_prep_fn(testdir, reverse=True)
+        generator = filegardener.onlycopy_yield(srcdir, checkdir, src_regex=None, dst_regex=None)
+        check_output_against_validation_file(generator, test_dir=testdir,
+                                             validation_file=validation_file_path,
+                                             validation_absolute=True,
+                                             result=False)
 
-    @pytest.mark.parametrize('testdir',['onlycopy', 'onlycopysymfirst', 'onlycopysymsecond'])
-    def test_only_none(self, testdir):
+    @pytest.mark.parametrize('testdir', ['emptydirs', 'identicaldirs'])
+    def test_onlycopy_srcfile_none_part2(self, testdir, tmpdir):
+        """ test_onlycopy_srcfile_none_part2 same as test_onlycopy_none_part2 except uses a srcfile instead of srcdir"""
+        method_name = "test_onlycopy_srcfile_none_part2"
+        checkdir, srcdir, validation_file_path = onlycopy_prep_fn(testdir, reverse=True)
+        result = CliRunner().invoke(filegardener.cli,
+                                    ['srcfile', '--srcdir', srcdir[0]])
+        assert result.exit_code == 0
+        p = tmpdir.mkdir("srcfile_output").join("{}{}".format(method_name, testdir))
+        p.write(result.output)
+        generator = filegardener.onlycopy_yield(None, checkdir, src_regex=None, dst_regex=None, srcfile=[str(p)])
+        check_output_against_validation_file(generator, test_dir=testdir,
+                                             validation_file=validation_file_path,
+                                             validation_absolute=True,
+                                             result=False)
+
+    @pytest.mark.parametrize('testdir', ['onlycopy', 'onlycopysymfirst', 'onlycopysymsecond'])
+    def test_onlycopy_none_part3(self, testdir):
+        # TODO: eventually remove, onlycopy_tester refactored to longer version below check below has more flexibility
         onlycopy_tester(testdir, noresults=False, reverse=False)
+        checkdir, srcdir, validation_file_path = onlycopy_prep_fn(testdir, reverse=False)
+        generator = filegardener.onlycopy_yield(srcdir, checkdir, src_regex=None, dst_regex=None)
+        check_output_against_validation_file(generator, test_dir=testdir,
+                                             validation_file=validation_file_path,
+                                             validation_absolute=True,
+                                             result=True)
+
+    @pytest.mark.parametrize('testdir', ['onlycopy', 'onlycopysymfirst', 'onlycopysymsecond'])
+    def test_onlycopy_srcfile_none_part3(self, testdir, tmpdir):
+        """ test_onlycopy_srcfile_none_part3 same as test_onlycopy_none_part3 except uses a srcfile instead of srcdir"""
+        method_name = "test_onlycopy_srcfile_none_part3"
+        checkdir, srcdir, validation_file_path = onlycopy_prep_fn(testdir, reverse=False)
+        result = CliRunner().invoke(filegardener.cli,
+                                    ['srcfile', '--srcdir', srcdir[0]])
+        assert result.exit_code == 0
+        p = tmpdir.mkdir("srcfile_output").join("{}{}".format(method_name, testdir))
+        p.write(result.output)
+        generator = filegardener.onlycopy_yield(None, checkdir, src_regex=None, dst_regex=None, srcfile=[str(p)])
+        check_output_against_validation_file(generator, test_dir=testdir,
+                                             validation_file=validation_file_path,
+                                             validation_absolute=True,
+                                             result=True)
 
     @pytest.mark.parametrize('testdir',['emptydirs', '7notemptydirs', '1dup'])
     def test_emptydirs(self, testdir):
@@ -176,14 +309,66 @@ class TestBasics(object):
     def test_onlycopy_regex_dst_rmonlycopy_files(self):
         """ test only copy regex so that only copy files are removed aka no results"""
         # filegardener onlycopy --srcdir=test_data/onlycopy/firstdir/ test_data/onlycopy/seconddir/ --include-dst-regex='.*.xzx$'
+        # TODO: eventually remove, onlycopy_tester refactored to longer version below check below has more flexibility
         onlycopy_tester('onlycopy', noresults=True, validation_file='test_onlycopy_regex_dst_rmonlycopy_files.txt',
                         arg_src_regex=None, arg_dst_regex='.*.xzx$')
+        testdir = 'onlycopy'
+        checkdir, srcdir, validation_file_path = onlycopy_prep_fn(testdir, reverse=False, validation_file='test_onlycopy_regex_dst_rmonlycopy_files.txt')
+        generator = filegardener.onlycopy_yield(srcdir, checkdir, src_regex=None, dst_regex='.*.xzx$')
+        check_output_against_validation_file(generator, test_dir=testdir,
+                                             validation_file=validation_file_path,
+                                             validation_absolute=True,
+                                             result=False)
 
     def test_onlycopy_regex_dst_has_onlycopy_files(self):
         """ test only copy regex so that only copy files are still present in results """
         # filegardener onlycopy --srcdir=test_data/onlycopy/firstdir/ test_data/onlycopy/seconddir/  --include-dst-regex='.*.png$'
         onlycopy_tester('onlycopy', noresults=False, validation_file='test_onlycopy_regex_dst_has_onlycopy_files.txt',
                         arg_src_regex='.*.png$', arg_dst_regex='.*.png$')
+        testdir = 'onlycopy'
+        checkdir, srcdir, validation_file_path = onlycopy_prep_fn(testdir, reverse=False,
+                                                                  validation_file='test_onlycopy_regex_dst_has_onlycopy_files.txt')
+        generator = filegardener.onlycopy_yield(srcdir, checkdir, src_regex='.*.png$', dst_regex='.*.png$')
+        check_output_against_validation_file(generator, test_dir=testdir,
+                                             validation_file=validation_file_path,
+                                             validation_absolute=True,
+                                             result=True)
+
+    def test_onlycopy_srcfile_regex_dst_rmonlycopy_files(self, tmpdir):
+        """ test only copy regex so that only copy files are removed aka no results"""
+        # filegardener onlycopy --srcdir=test_data/onlycopy/firstdir/ test_data/onlycopy/seconddir/ --include-dst-regex='.*.xzx$'
+        # TODO: eventually remove, onlycopy_tester refactored to longer version below check below has more flexibility
+        testdir='onlycopy'
+        method_name = "test_onlycopy_srcfile_regex_dst_rmonlycopy_files"
+        checkdir, srcdir, validation_file_path = onlycopy_prep_fn(testdir, reverse=False, validation_file='test_onlycopy_regex_dst_rmonlycopy_files.txt')
+        result = CliRunner().invoke(filegardener.cli,
+                                    ['srcfile', '--srcdir', srcdir[0]])
+        assert result.exit_code == 0
+        p = tmpdir.mkdir("srcfile_output").join("{}{}".format(method_name, testdir))
+        p.write(result.output)
+        generator = filegardener.onlycopy_yield(None, checkdir, src_regex=None, dst_regex='.*.xzx$', srcfile=[str(p)])
+        check_output_against_validation_file(generator, test_dir=testdir,
+                                             validation_file=validation_file_path,
+                                             validation_absolute=True,
+                                             result=False)
+
+    def test_onlycopy_srcfile_regex_dst_has_onlycopy_files(self, tmpdir):
+        """ test only copy regex so that only copy files are still present in results """
+        # filegardener onlycopy --srcdir=test_data/onlycopy/firstdir/ test_data/onlycopy/seconddir/  --include-dst-regex='.*.png$'
+        testdir = 'onlycopy'
+        method_name = "test_onlycopy_srcfile_regex_dst_has_onlycopy_files"
+        checkdir, srcdir, validation_file_path = onlycopy_prep_fn(testdir, reverse=False,
+                                                                  validation_file='test_onlycopy_regex_dst_has_onlycopy_files.txt')
+        result = CliRunner().invoke(filegardener.cli,
+                                    ['srcfile', '--srcdir', srcdir[0]])
+        assert result.exit_code == 0
+        p = tmpdir.mkdir("srcfile_output").join("{}{}".format(method_name, testdir))
+        p.write(result.output)
+        generator = filegardener.onlycopy_yield(None, checkdir, src_regex='.*.png$', dst_regex='.*.png$', srcfile=[str(p)])
+        check_output_against_validation_file(generator, test_dir=testdir,
+                                             validation_file=validation_file_path,
+                                             validation_absolute=True,
+                                             result=True)
 
     @pytest.mark.parametrize('regex_arg', ['--include-regex=\'[].*\.txt$\'', '--include-src-regex=\'[].*\.txt$\'',
                                            '--include-dst-regex=\'[].*\.txt$\''])
@@ -643,7 +828,7 @@ def path_make_abs(path):
 
 def srcfile_make_abs(size_path):
     size, path = size_path.split(':', 2)
-    return "{}:{}".format(size,os.path.abspath(os.path.join(os.getcwd(), path)))
+    return "{}:{}".format(size, os.path.abspath(os.path.join(os.getcwd(), path)))
 
 
 def srcfile_create_keyvalue(file_size_tuple):
@@ -672,9 +857,6 @@ def check_output_against_validation_file(output, test_dir=None, validation_file=
     else:
         test_validation_file = os.path.join(test_basedir, validation_file)
 
-    # check that the validation file points to a real file
-    assert os.path.isfile(test_validation_file)
-
     is_unicode_class = True
     try:
         unicode
@@ -695,6 +877,8 @@ def check_output_against_validation_file(output, test_dir=None, validation_file=
         is_string = is_string_fn
 
     if result:
+        # check that the validation file points to a real file
+        assert os.path.isfile(test_validation_file)
         generator = None
 
         # turn your string output into generator
@@ -754,36 +938,22 @@ def check_output_against_validation_file(output, test_dir=None, validation_file=
             assert True
         else:
             with pytest.raises(StopIteration):
-                next(generator)
+                next(output)
+
 
 def onlycopy_tester(test_dir, reverse=False, noresults=False, validation_file=None, arg_src_regex=None,
                     arg_dst_regex=None):
     """ onlycopy test you give this method a path name and it looks under test_data/ for that directory to test.  
     This test assumes that the order the duplicates will be found will be the same"""
-    test_basedir = os.path.abspath(os.path.join(os.getcwd(), 'test_data', test_dir))
-    validation_file_name = ''
-    dir1 = os.path.join(test_basedir, 'firstdir')
-    dir2 = os.path.join(test_basedir, 'seconddir')
-    if reverse: 
-        validation_file_name = 'onlycopy_correct_results_reverse_input_dirs.txt'
-        srcdir = [dir2]
-        checkdir = [dir1]
-    else:
-        validation_file_name = 'onlycopy_correct_results.txt'
-        srcdir = [dir1]
-        checkdir = [dir2]
+    checkdir, srcdir, validation_file_path = onlycopy_prep_fn(test_dir, reverse, validation_file)
 
-    if validation_file is not None:
-        validation_file_name = validation_file
-        
-    test_validation_file = os.path.join(test_basedir, validation_file_name)
     generator = filegardener.onlycopy_yield(srcdir, checkdir, src_regex=arg_src_regex, dst_regex=arg_dst_regex)
     
     if noresults:
         with pytest.raises(StopIteration):
             next(generator)
     else:
-        with open(test_validation_file) as f:
+        with open(validation_file_path) as f:
             result_lookup = {}
             for line in f:
                 file_name = line.rstrip()  # remove new lines from each line
@@ -793,6 +963,25 @@ def onlycopy_tester(test_dir, reverse=False, noresults=False, validation_file=No
                 assert result_lookup[line] == line
                 del result_lookup[line]
             assert len(result_lookup.keys()) == 0
+
+
+def onlycopy_prep_fn(test_dir, reverse=False, validation_file=None):
+    test_basedir = os.path.abspath(os.path.join(os.getcwd(), 'test_data', test_dir))
+    validation_file_name = ''
+    dir1 = os.path.join(test_basedir, 'firstdir')
+    dir2 = os.path.join(test_basedir, 'seconddir')
+    if reverse:
+        validation_file_name = 'onlycopy_correct_results_reverse_input_dirs.txt'
+        srcdir = [dir2]
+        checkdir = [dir1]
+    else:
+        validation_file_name = 'onlycopy_correct_results.txt'
+        srcdir = [dir1]
+        checkdir = [dir2]
+    if validation_file is not None:
+        validation_file_name = validation_file
+    validation_file_path = os.path.join(test_basedir, validation_file_name)
+    return checkdir, srcdir, validation_file_path
 
 
 def emptydirs_tester(test_dir, noresults=False):
