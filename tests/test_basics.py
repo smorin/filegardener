@@ -360,11 +360,32 @@ class TestBasics(object):
         checkdir, srcdir, validation_file_path = onlycopy_prep_fn(testdir, reverse=False,
                                                                   validation_file='test_onlycopy_regex_dst_has_onlycopy_files.txt')
         result = CliRunner().invoke(filegardener.cli,
-                                    ['srcfile', '--srcdir', srcdir[0]])
+                                    ['srcfile', '--srcdir', srcdir[0], '--include-src-regex', '.*.png$'])
         assert result.exit_code == 0
         p = tmpdir.mkdir("srcfile_output").join("{}{}".format(method_name, testdir))
         p.write(result.output)
         generator = filegardener.onlycopy_yield(None, checkdir, src_regex='.*.png$', dst_regex='.*.png$', srcfile=[str(p)])
+        check_output_against_validation_file(generator, test_dir=testdir,
+                                             validation_file=validation_file_path,
+                                             validation_absolute=True,
+                                             result=True)
+
+    def test_onlycopy_srcfile_regex_dst_has_onlycopycolon_files(self, tmpdir):
+        """ test only copy regex so that only copy files are still present in results 
+            this also tests that a colon in a srcfile also works fine as well as output
+            there are two files with identical names but different contents ipsum:lorem.txt
+            """
+        # filegardener onlycopy --srcdir=test_data/onlycopy/firstdir/ test_data/onlycopy/seconddir/  --include-dst-regex='.*.png$'
+        testdir = 'onlycopycolon'
+        method_name = "test_onlycopy_srcfile_regex_dst_has_onlycopycolon_files"
+        checkdir, srcdir, validation_file_path = onlycopy_prep_fn(testdir, reverse=False,
+                                                                  validation_file='test_onlycopy_srcfile_regex_dst_has_onlycopycolon_files.txt')
+        result = CliRunner().invoke(filegardener.cli,
+                                    ['srcfile', '--srcdir', srcdir[0], '--include-src-regex', '.*.(png|txt)$'])
+        assert result.exit_code == 0
+        p = tmpdir.mkdir("srcfile_output").join("{}{}".format(method_name, testdir))
+        p.write(result.output)
+        generator = filegardener.onlycopy_yield(None, checkdir, src_regex='.*.(png|txt)$', dst_regex='.*.(png|txt)$', srcfile=[str(p)])
         check_output_against_validation_file(generator, test_dir=testdir,
                                              validation_file=validation_file_path,
                                              validation_absolute=True,

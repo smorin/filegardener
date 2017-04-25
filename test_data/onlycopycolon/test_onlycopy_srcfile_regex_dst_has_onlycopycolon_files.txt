@@ -1,0 +1,2 @@
+test_data/onlycopycolon/seconddir/liten-0.1.5-py2.5/EGG-INFO/tumblr_static_70kt88zhd0so4g84koowgwow.png
+test_data/onlycopycolon/seconddir/EGG-INFO/ipsum:lorem.txt

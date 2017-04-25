@@ -32,7 +32,7 @@ def eprint(*args, **kwargs):
     """ prints to stderr, using the 'from __future__ import print_function' """
     print(*args, file=sys.stderr, **kwargs)
 
-__version__ = '1.7.1'
+__version__ = '1.7.2'
 __author__ = 'Steve Morin'
 __script_name__ = 'filegardener'
 
@@ -504,8 +504,10 @@ def srcfile_yield(srcdir, failonerror=True, src_regex=None, dst_regex=None):
         yield tup
 
 @cli.command(context_settings=CONTEXT_SETTINGS)
-@click.option('--srcdir', '-s', multiple=True, required=True, help='directories to check',
+@click.option('--srcdir', '-s', multiple=True, required=False, help='directories to check',
               type=click.Path(exists=True, file_okay=False, dir_okay=True, readable=True, resolve_path=True))
+@click.option('--srcfile', '-f', multiple=True, required=False, help='files of sizes and paths',
+              type=click.Path(exists=True, file_okay=True, dir_okay=False, readable=True, resolve_path=True))
 @click.argument('checkdir', nargs=-1, required=True,
                 type=click.Path(exists=True, file_okay=False, dir_okay=True, readable=True, resolve_path=True))
 @click.option('--relpath/--no-relpath', '-r', default=False, help='turn on/off relative path - default off')
@@ -517,11 +519,14 @@ def srcfile_yield(srcdir, failonerror=True, src_regex=None, dst_regex=None):
 @click.option('--include-dst-regex', default=None, type=click.STRING,
               help='use this regex on dst files to test if they should be included if they match') # add callback for validation
 @click.pass_obj
-def onlycopy(ctx, srcdir, checkdir, relpath, failonerror, include_regex, include_src_regex, include_dst_regex):
+def onlycopy(ctx, srcdir, srcfile, checkdir, relpath, failonerror, include_regex, include_src_regex, include_dst_regex):
     """
     onlycopy command prints list of all the files that aren't in the srcdir
     """
 
+    if not (srcdir or srcfile):
+        raise click.BadOptionUsage("The regex didn't compile. For correct usage"
+                                   " see:  https://docs.python.org/2/library/re.html")
     # validate the regex options
     check_regex(include_regex)
     if include_regex is not None:
@@ -532,10 +537,12 @@ def onlycopy(ctx, srcdir, checkdir, relpath, failonerror, include_regex, include
 
     if relpath:
         basepath = os.getcwd()
-        for i in onlycopy_yield(srcdir, checkdir, failonerror, src_regex=include_src_regex, dst_regex=include_dst_regex):
+        for i in onlycopy_yield(srcdir, checkdir, failonerror, src_regex=include_src_regex, dst_regex=include_dst_regex,
+                                srcfile=srcfile):
             click.echo(os.path.relpath(i, basepath))
     else:
-        for i in onlycopy_yield(srcdir, checkdir, failonerror, src_regex=include_src_regex, dst_regex=include_dst_regex):
+        for i in onlycopy_yield(srcdir, checkdir, failonerror, src_regex=include_src_regex, dst_regex=include_dst_regex,
+                                srcfile=srcfile):
             click.echo(i)
 
 
@@ -550,18 +557,31 @@ def check_regex(regexstring):
                                        " see:  https://docs.python.org/2/library/re.html")
 
 
-def onlycopy_yield(srcdir, checkdir, failonerror=True, src_regex=None, dst_regex=None):
+def onlycopy_yield(srcdir, checkdir, failonerror=True, src_regex=None, dst_regex=None, srcfile=None):
     """
     onlycopy command prints list of all the files that aren't in the srcdir
     """
-    check_dir_no_overlap(srcdir, checkdir)
 
+    if srcdir is None and srcfile is None:
+        raise ValueError("srcdir or srcfile must be supplied to onlycopy_yield")
+
+    if srcdir is not None:
+        check_dir_no_overlap(srcdir, checkdir)
+    # Skip check on srcfile, too many entries to check, so assume it's correct
     # http://stackoverflow.com/questions/19699127/efficient-array-concatenation
 
     basefiles = []
-    for mydir in srcdir:
-        innerdir = get_files_and_size_from_dir(mydir, regex=src_regex)
-        basefiles.extend(innerdir)
+    if srcdir is not None:
+        for mydir in srcdir:
+            # return a list of tuples with (path, size)
+            innerdir = get_files_and_size_from_dir(mydir, regex=src_regex)
+            basefiles.extend(innerdir)
+
+    if srcfile is not None:
+        for myfile in srcfile:
+            # return a list of tuples with (path, size)
+            innerdir = get_files_and_size_from_file(myfile, regex=src_regex)
+            basefiles.extend(innerdir)
 
     size_dict = create_size_dict(basefiles)
 
@@ -608,7 +628,90 @@ def get_files_and_size_from_dir(topdir, regex=None):
              and is_re_match(os.path.abspath(os.path.join(dirpath, filename)))
              ]
     return files
-    
+
+
+def create_is_string_fn():
+    is_unicode_class = True
+    try:
+        unicode
+    except:
+        is_unicode_class = False
+
+    is_string = None
+
+    if is_unicode_class:
+        def is_string_fn(my_string):
+            return isinstance(my_string, str) or isinstance(output, unicode)
+
+        is_string = is_string_fn
+    else:
+        def is_string_fn(my_string):
+            return isinstance(my_string, str)
+
+        is_string = is_string_fn
+
+    return is_string
+
+is_string = create_is_string_fn()
+
+
+def create_convert_to_unicode_fn():
+    is_unicode_class = True
+    try:
+        unicode
+    except:
+        is_unicode_class = False
+    convert_string = None
+
+    if is_unicode_class:
+        def convert_string_fn(my_string):
+            return my_string.decode()
+
+        convert_string = convert_string_fn
+    else:
+        def convert_string_fn(my_string):
+            return my_string
+
+        convert_string = convert_string_fn
+    return convert_string
+
+convert_to_unicode = create_convert_to_unicode_fn()
+
+
+def get_files_and_size_from_file(sizepathfile, regex=None):
+    """ Finds all the files listed in a srcfile. Returns a list of the absolute path for
+    all of these files.  This should be a list of tuples [(path1, size1), (path2, size2)]"""
+    if regex is not None:
+        compiled_regex = re.compile(regex, flags=re.IGNORECASE)
+
+        def is_re_match(file_path):
+            if compiled_regex.match(file_path):
+                return True
+            else:
+                return False
+    else:
+
+        def is_re_match(file_path):
+            return True
+
+    if not os.path.isfile(sizepathfile):
+        raise Exception("You submitted a file that isn't one'")
+
+    tuple_list = []
+    with open(sizepathfile) as f:
+        for line in f:
+            line_string = line.rstrip()  # remove new lines from each line
+            size, path = line_string.split(':', 1)
+            path = os.path.abspath(os.path.join(os.getcwd(), path))
+            # needs to be put here because abs_path_fn functions convert back to str
+            if is_string(path):
+                path = convert_to_unicode(path)
+            # make sure it passes regex if any
+            if is_re_match(path):
+                tuple_list.append((path, int(size)))
+    return tuple_list
+
+
 def create_size_dict(files_size):
     size_dict = {}
     for file, size in files_size:
