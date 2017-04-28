@@ -44,7 +44,8 @@ class TestBasics(object):
             os.symlink(dst, src)
 
 
-    possible_keys = pytest.mark.parametrize('key', ('accept', 'ACCEPT', 'aCcEpT', 'Accept'))
+    possible_keys = pytest.mark.parametrize('key',
+                                            ('accept', 'ACCEPT', 'aCcEpT', 'Accept'))
 
     @possible_keys
     def test_example_passinginputs(self, key):
@@ -100,32 +101,36 @@ class TestBasics(object):
     def test_countfiles_twenty(self):
         """ test countfiles for a set of 20 files """
         # filegardener.configure_logger(True,None)
-        assert filegardener.count_files([],[os.path.abspath(os.path.join(os.getcwd(),'./test_data/1dup/firstdir'))]) == 20
+        assert filegardener.count_files([], [os.path.abspath(os.path.join(os.getcwd(),'./test_data/1dup/firstdir'))]) == 20
 
     def test_countdirs_sixteen(self):
         """ test countfiles for a set of zero files"""
         # filegardener.configure_logger(True,None)
-        assert filegardener.count_dirs([],[os.path.abspath(os.path.join(os.getcwd(),'./test_data/emptydirs'))]) == 18
+        assert filegardener.count_dirs([], [os.path.abspath(os.path.join(os.getcwd(),'./test_data/emptydirs'))]) == 18
 
     def test_countdirs_three(self):
         """ test countfiles for a set of 20 files """
         # filegardener.configure_logger(True,None)
-        assert filegardener.count_dirs([],[os.path.abspath(os.path.join(os.getcwd(),'./test_data/1dup/firstdir'))]) == 4
+        assert filegardener.count_dirs([], [os.path.abspath(os.path.join(os.getcwd(),'./test_data/1dup/firstdir'))]) == 4
 
     def test_duplicate_one(self):
         """ test that there is only one duplicate"""
 
-    @pytest.mark.parametrize('testdir',['3dupsof6', '1dup', 'identicaldirs'])
+    @pytest.mark.parametrize('testdir', ['3dupsof6', '1dup', 'identicaldirs'])
     def test_dedup(self, testdir):
-        dup_tester(testdir)
+        dedup_tester(testdir)
 
-    @pytest.mark.parametrize('testdir',['3dupsof6', '1dup', 'identicaldirs'])
+    @pytest.mark.parametrize('testdir', ['3dupsof6', '1dup', 'identicaldirs'])
     def test_dedup_reverse(self, testdir):
-        dup_tester(testdir, reverse=True)
+        dedup_tester(testdir, reverse=True)
 
-    @pytest.mark.parametrize('testdir',['emptydirs', 'nodups'])
+    @pytest.mark.parametrize('testdir', ['emptydirs', 'nodups'])
     def test_dedup_none(self, testdir):
-        dup_tester(testdir, noresults=True)
+        dedup_tester(testdir, noresults=True)
+
+    @pytest.mark.parametrize('testdir', ['onlycopysymfirst', 'onlycopysymsecond'])
+    def test_dedup_symlink(self, testdir):
+        dedup_tester(testdir, noresults=False)
 
     @pytest.mark.parametrize('testdir', ['1dup', 'nodups'])
     def test_only(self, testdir):
@@ -808,7 +813,7 @@ class TestBasics(object):
         assert (other == other) is result
 
 
-def dup_tester(test_dir, reverse=False, noresults=False):
+def dedup_tester(test_dir, reverse=False, noresults=False):
     """ you give this method a path name and it looks under test_data/ for that directory to test.  
     This test assumes that the order the duplicates will be found will be the same"""
     test_basedir = os.path.abspath(os.path.join(os.getcwd(), 'test_data', test_dir))

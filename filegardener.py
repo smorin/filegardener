@@ -752,15 +752,15 @@ def get_duplicate_files(size_dict, topdir):
     
     if_match_return_true = True
 
-    files = [ os.path.abspath(os.path.join(dirpath,filename)) # return absolute path of file that matches criteria
+    files = [os.path.abspath(os.path.join(dirpath, filename))  # return absolute path of file that matches criteria
                 for dirpath, dirnames, files in os.walk(topdir) 
                     for filename in files 
-                        if os.path.getsize(os.path.join(dirpath,filename)) in size_dict 
-                        and is_match(os.path.getsize(os.path.join(dirpath,filename)), # size
-                        os.path.abspath(os.path.join(dirpath,filename)), # file
-                        size_dict[os.path.getsize(os.path.join(dirpath,filename))], # file_list
-                        if_match_return_true) # if_match_return_value
-            ] 
+                        if not os.path.islink(os.path.join(dirpath, filename)) and
+                        os.path.getsize(os.path.join(dirpath, filename)) in size_dict
+                        and is_match(os.path.getsize(os.path.join(dirpath, filename)),  # size
+                        os.path.abspath(os.path.join(dirpath, filename)),  # file
+                        size_dict[os.path.getsize(os.path.join(dirpath, filename))],  # file_list
+                        if_match_return_true)]  # if_match_return_value
     return files  
 
 

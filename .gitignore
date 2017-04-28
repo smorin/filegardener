@@ -90,3 +90,10 @@ ENV/
 
 # tmp
 tmp/
+
+# test symlink that should be put in git
+test_data/onlycopysymfirst/firstdir/brokensymlink
+test_data/onlycopysymsecond/seconddir/brokensymlink
+
+# intellij files 
+.idea
