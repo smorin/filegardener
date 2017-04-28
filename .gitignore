@@ -95,5 +95,5 @@ tmp/
 test_data/onlycopysymfirst/firstdir/brokensymlink
 test_data/onlycopysymsecond/seconddir/brokensymlink
 
-# intellij files 
+# intellij files
 .idea

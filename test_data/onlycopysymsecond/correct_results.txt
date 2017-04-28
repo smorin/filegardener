@@ -1,7 +1,5 @@
 test_data/onlycopysymsecond/seconddir/liten.py
-test_data/onlycopysymsecond/seconddir/liten.pyc
 test_data/onlycopysymsecond/seconddir/test_liten.py
-test_data/onlycopysymsecond/seconddir/test_liten.pyc
 test_data/onlycopysymsecond/seconddir/EGG-INFO/dependency_links.txt
 test_data/onlycopysymsecond/seconddir/EGG-INFO/entry_points.txt
 test_data/onlycopysymsecond/seconddir/EGG-INFO/not-zip-safe
@@ -9,9 +7,7 @@ test_data/onlycopysymsecond/seconddir/EGG-INFO/PKG-INFO
 test_data/onlycopysymsecond/seconddir/EGG-INFO/SOURCES.txt
 test_data/onlycopysymsecond/seconddir/EGG-INFO/top_level.txt
 test_data/onlycopysymsecond/seconddir/liten-0.1.5-py2.5/liten.py
-test_data/onlycopysymsecond/seconddir/liten-0.1.5-py2.5/liten.pyc
 test_data/onlycopysymsecond/seconddir/liten-0.1.5-py2.5/test_liten.py
-test_data/onlycopysymsecond/seconddir/liten-0.1.5-py2.5/test_liten.pyc
 test_data/onlycopysymsecond/seconddir/liten-0.1.5-py2.5/EGG-INFO/dependency_links.txt
 test_data/onlycopysymsecond/seconddir/liten-0.1.5-py2.5/EGG-INFO/entry_points.txt
 test_data/onlycopysymsecond/seconddir/liten-0.1.5-py2.5/EGG-INFO/not-zip-safe
