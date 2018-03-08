@@ -75,6 +75,14 @@ If you want not fail on error and capture the list of file you only have 1 copy 
 	time filegardener onlycopy --no-failonerror --srcdir ~/Pictures --srcdir ~/Music /Volumes/MyUSBDrive > >(tee stdout.log) 2> >(tee stderr.log >&2)
 
 
+Todo's
+-------------
+* click plugin integration
+* filegardener histogram -file size
+* filegardener check per bucket
+* filegardener optimize is_match
+*
+
 Usage Summary
 -------------
 
