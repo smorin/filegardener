@@ -46,6 +46,18 @@ Build
 
 	> make
 
+Test fixtures
+-------------
+
+``test_data`` contains byte inputs for duplicate-file and only-copy tests.
+The two ``test_data/{1dup,nodups}/seconddir/dependency-pins.fixture`` files
+retain historical package-version text as test data. They are not dependency
+manifests for Filegardener and must not be installed. Their ``.fixture`` suffix
+distinguishes these inputs from the root ``requirements.txt`` used by the build.
+Keep their contents and the corresponding golden filename lists in sync with
+the duplicate and only-copy test expectations. These fixtures are included in
+the package data.
+
 Use-Cases
 ---------
 
