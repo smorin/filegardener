@@ -7,7 +7,7 @@ test_data/1dup/seconddir/MANIFEST.in
 test_data/1dup/seconddir/NOTICE
 test_data/1dup/seconddir/README.rst
 test_data/1dup/seconddir/requirements-to-freeze.txt
-test_data/1dup/seconddir/requirements.txt
+test_data/1dup/seconddir/dependency-pins.fixture
 test_data/1dup/seconddir/setup.py
 test_data/1dup/seconddir/docs/api.rst
 test_data/1dup/seconddir/docs/conf.py
